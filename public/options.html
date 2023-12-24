@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css"
+        integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
+        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link rel="stylesheet" href="options.css">
+  <title>Azure DevOps Search Options</title>
+</head>
+<body>
+  <div class="container">
+    <h1>Azure DevOps Search Options</h1>
+
+    <div class="option">
+      <input type="checkbox" id="openInNewTab">
+      <label for="openInNewTab">Always open search in new tab</label>
+    </div>
+
+    <h3><span>ADO Settings</span></h3>
+
+    <div class="option">
+      <label for="companyName">Company Name:</label>
+      <input type="text" id="companyName" placeholder="Enter company name">
+    </div>
+
+    <div class="option">
+      <label for="projectName">Project Name:</label>
+      <input type="text" id="projectName" placeholder="Enter project name">
+    </div>
+    
+    <h3><span>Kusto Settings</span></h3>
+
+    <div class="option">
+      <label for="clusterName">Cluster Name:</label>
+      <input type="text" id="clusterName" placeholder="Enter project name">
+    </div>
+
+    <div class="option">
+      <label for="databaseName">Database Name:</label>
+      <input type="text" id="databaseName" placeholder="Enter project name">
+    </div>
+    
+    <div class="option">
+      <label for="tableName">Table Name:</label>
+      <input type="text" id="tableName" placeholder="Enter project name">
+    </div>
+
+    <h3><span>OpenAI Settings</span></h3>
+
+    <div class="option">
+      <label for="openAIApiKey">API Key:
+        <a href="https://platform.openai.com/api-keys" target="_blank">
+          <i class="fa fa-info-circle"></i>
+        </a>
+      </label>
+      <input type="password" id="openAIApiKey" placeholder="Enter your API key">
+      <input type="checkbox" id="apiKeyShowToggle">Show key
+    </div>
+
+    <button id="saveButton">Save</button>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
