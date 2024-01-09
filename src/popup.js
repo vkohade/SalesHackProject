@@ -3,6 +3,7 @@ import "./popup.css";
 let span_company = document.getElementById("company");
 let span_projectName = document.getElementById("projectName");
 let ado_search = document.getElementById("search-in-ado");
+let ado_create_work_item = document.getElementById("create-ado-work-item");
 let unify_search = document.getElementById("search-in-unify");
 let kusto_search = document.getElementById("query-in-kusto");
 let form_newTab = document.getElementById("newTab");
@@ -30,6 +31,7 @@ chrome.storage.sync.get(
     ) {
       span_company.textContent = "[OPTIONS NOT SET]";
       ado_search.disabled = true;
+      ado_create_work_item = true;
     }
 
     if (
@@ -62,6 +64,60 @@ ado_search.onclick = function () {
 
   createNewTab(fullADOUrl);
 };
+
+ado_create_work_item.onclick = function () {
+  let search = input_query.value
+
+  // Check if search query is not empty
+  if (search.trim() !== '') {
+    let fullADOUrl = adoBaseUrl + '/_apis/wit/workitems/$Task?api-version=6.0'
+
+    // Construct the work item payload (you might need to adjust this based on your work item type and fields)
+    let workItemPayload = {
+      op: 'add',
+      path: '/fields/System.Title',
+      value: search,
+    }
+    let authToken = null
+    chrome.cookies.get(
+      { url: 'https://dev.azure.com', name: 'UserAuthentication' },
+      function (cookie) {
+        if (cookie) {
+          authToken = cookie.value
+          console.log('Authentication Token:', authToken)
+
+          // Now you can use authToken for making authenticated requests to the Azure DevOps API.
+        } else {
+          console.error('UserAuthentication cookie not found.')
+        }
+      }
+    )
+
+    // Make a POST request to the Azure DevOps REST API
+    fetch(fullADOUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authToken,
+      },
+      body: JSON.stringify([workItemPayload]),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        // Handle the response data (e.g., log it or update the UI)
+        console.log('Work item created:', data)
+      })
+      .catch((error) => {
+        // Handle errors (e.g., show an error message to the user)
+        console.error('Error creating work item:', error)
+      })
+  } else {
+    // Handle the case when the search query is empty
+    alert('Please enter a title for the work item.')
+  }
+}
+
+
 
 unify_search.onclick = function () {
   let search = input_query.value;
