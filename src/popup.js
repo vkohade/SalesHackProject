@@ -30,9 +30,8 @@ chrome.storage.sync.get(
     console.log(JSON.stringify(items));
     let companyName = items.adoSettings.company;
     let projectName = items.adoSettings.project;
-    let clusterName = items.kustoSettings.cluster;
-    let databaseName = items.kustoSettings.database;
-    let tableName = items.kustoSettings.table;
+    let configJson = items.kustoSettings.configJson;
+
     // make sure they're both present
     if (
       !(companyName && companyName.length > 0) ||
@@ -40,14 +39,6 @@ chrome.storage.sync.get(
     ) {
       span_company.textContent = "[OPTIONS NOT SET]";
       ado_search.disabled = true;
-    }
-
-    if (
-      !(clusterName && clusterName.length > 0) ||
-      !(databaseName && databaseName.length > 0) ||
-      !(tableName && tableName.length > 0)
-    ) {
-      //kusto_search.disabled = false;
     }
 
     span_company.textContent = companyName;
