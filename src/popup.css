@@ -25,3 +25,13 @@ body {
 .full-width {
     width: 100%;
 }
+
+.dropdown-items{
+    padding-top: 5px;
+    border: none;
+    padding-right: 10px;
+    padding-left: 10px;
+    padding-bottom: 5px;
+    font-size: 12px;
+    width: 100%;
+}
