@@ -9,7 +9,55 @@
         integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
     <link rel="stylesheet" href="popup.css">
 </head>
+<style>
+    .dropbtn {
+        padding-top: 5px;
+        border: none;
+        padding-right: 10px;
+        padding-left: 10px;
+        padding-bottom: 5px;
+        font-size: 12px;
+        width: 100%;
+    }
 
+    .dropdown {
+        padding-top: 5px;
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f1f1f1;
+        min-width: 100px;
+        box-shadow: 2px 10px 10px 2px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+    }
+
+    .dropdown-content a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        width: 100%;
+    }
+
+    .dropdown-content a:hover {
+        background-color: #ddd;
+        width: 100%;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+        width: 100%;
+    }
+
+    .dropdown:hover .dropbtn {
+        background-color: #e0e7e0;
+    }
+</style>
 <body>
     <div class="content">
         <h2>Search Azure Devops</h2>
@@ -42,9 +90,13 @@
                 <button id="search-in-unify" class="pure-button full-width" type="submit" tooltip="Search in Unify">
                     <i class="fa fa-search"></i> Search in Unify
                 </button>
-                <button id="query-in-kusto" class="pure-button full-width" type="submit" tooltip="Search in Kusto">
+                <!-- <button id="query-in-kusto" class="pure-button full-width" type="submit" tooltip="Search in Kusto">
                     <i class="fa fa-search"></i> Query in Kusto
-                </button>
+                </button> -->
+                <div class="dropdown" id="dropdown">
+                    <button class="dropbtn">Search in Kusto</button>
+                    <div class="dropdown-content"></div>
+                </div>
             </div>
         </form>
     </div>

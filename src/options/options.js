@@ -11,12 +11,8 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("projectName").value =
         result.adoSettings.project || "";
 
-      document.getElementById("clusterName").value =
+      document.getElementById("configJson").value =
         result.kustoSettings.cluster || "";
-      document.getElementById("databaseName").value =
-        result.kustoSettings.database || "";
-      document.getElementById("tableName").value =
-        result.kustoSettings.table || "";
 
       document.getElementById("openAIApiKey").value =
         result.openAISettings.apiKey || "";
@@ -28,9 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const openInNewTab = document.getElementById("openInNewTab").checked;
     const companyName = document.getElementById("companyName").value;
     const projectName = document.getElementById("projectName").value;
-    const clusterName = document.getElementById("clusterName").value;
-    const databaseName = document.getElementById("databaseName").value;
-    const tableName = document.getElementById("tableName").value;
+    const configJson = document.getElementById("configJson").value;
     const openAIapiKey = document.getElementById("openAIApiKey").value;
 
     let options = {
@@ -40,9 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
         project: projectName,
       },
       kustoSettings: {
-        cluster: clusterName,
-        database: databaseName,
-        table: tableName,
+        configJson: configJson,
       },
       openAISettings: {
         apiKey: openAIapiKey,
