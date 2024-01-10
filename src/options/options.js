@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
         result.adoSettings.project || "";
 
       document.getElementById("configJson").value =
-        result.kustoSettings.cluster || "";
+        result.kustoSettings.configJson || "";
 
       document.getElementById("openAIApiKey").value =
         result.openAISettings.apiKey || "";
