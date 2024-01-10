@@ -4,7 +4,7 @@ let span_company = document.getElementById("company");
 let span_projectName = document.getElementById("projectName");
 let ado_search = document.getElementById("search-in-ado");
 let unify_search = document.getElementById("search-in-unify");
-let kusto_search = document.getElementById("query-in-kusto");
+let kusto_search = document.getElementById("dropdown");
 let form_newTab = document.getElementById("newTab");
 let button_settings = document.getElementById("settings");
 let input_query = document.getElementById("query");
@@ -18,17 +18,13 @@ let kusto_prefix =
 let adoBaseUrl;
 let kustoBaseUrl;
 let unifyBaseUrl = "https://unify.services.dynamics.com/CRM/Org";
-let YOUR_API_KEY = "";
 let configJson = {};
-let globalItems;
 
 chrome.storage.sync.get(
-  { adoSettings: {}, kustoSettings: {}, newTab: true, openAISettings: {} },
+  { adoSettings: {}, kustoSettings: {}, newTab: true },
   function (items) {
-    globalItems = items;
-    console.log(JSON.stringify(items));
-    let companyName = items.adoSettings.company;
-    let projectName = items.adoSettings.project;
+    let companyName = items.adoSettings.company || "dynamicscrm";
+    let projectName = items.adoSettings.project || "OneCRM";
     configJson = JSON.parse(items.kustoSettings.configJson);
 
     // make sure they're both present
@@ -44,7 +40,6 @@ chrome.storage.sync.get(
     span_projectName.textContent = projectName;
     form_newTab.checked = items.newTab;
     adoBaseUrl = `https://dev.azure.com/${companyName}/${projectName}`;
-    YOUR_API_KEY = items.openAISettings.apiKey;
 
     // Create a new link for each kusto scenario and add it to the flyout menu
     for (const [key, value] of Object.entries(configJson)) {
@@ -62,7 +57,7 @@ chrome.storage.sync.get(
         let finalKustoQuery =
           kustoBaseUrl + configJson[element.id] + kusto_suffix;
         console.log(finalKustoQuery);
-        window.open(finalKustoQuery, "_blank");
+        createNewTab(finalKustoQuery);
       });
     });
   }
@@ -101,7 +96,7 @@ unify_search.onclick = function () {
 document.addEventListener("DOMContentLoaded", function () {
   chrome.tabs.query({ active: true, currentWindow: true }).then((resp) => {
     const [tab] = resp;
-    let result;
+    let selectedText = "";
     try {
       chrome.scripting
         .executeScript({
@@ -109,22 +104,38 @@ document.addEventListener("DOMContentLoaded", function () {
           func: () => getSelection().toString(),
         })
         .then((resp) => {
-          [{ result }] = resp;
-          document.getElementById("query").value = result;
-
-          if (isSelectedTextGuid(result)) {
-            unify_search.style.display = "block";
-            kusto_search.style.display = "block";
-
-            for (const [key, value] of Object.entries(configJson)) {
-              configJson[key] = replacer(value, {
-                Guid: `"${input_query.value}"`,
-              });
-            }
-            kustoBaseUrl = `${kusto_prefix}`; //${configData}${kusto_suffix}
+          console.log(resp);
+          if (!resp || resp.length === 0) {
+            document.getElementById("query").value = "Please select some text";
+            return;
           } else {
+            selectedText = resp[0].result;
+          }
+          if (selectedText.length === 0) {
+            ado_search.disabled = true;
             unify_search.style.display = "none";
             kusto_search.style.display = "none";
+          } else {
+            document.getElementById("query").value = selectedText;
+
+            if (isSelectedTextGuid(selectedText)) {
+              unify_search.style.display = "block";
+              kusto_search.style.display = "block";
+
+              for (const [key, value] of Object.entries(configJson)) {
+                configJson[key] = replacer(value, {
+                  Guid: `"${input_query.value}"`,
+                });
+              }
+              kustoBaseUrl = `${kusto_prefix}`; //${configData}${kusto_suffix}
+            } else {
+              unify_search.style.display = "none";
+              kusto_search.style.display = "none";
+            }
+
+            let intent = getIntentFromTextAndUrl(selectedText, tab.url);
+            let promptDictionary = getPromptFromIntent(intent);
+            askLlama2(promptDictionary);
           }
         });
       return;
@@ -144,28 +155,30 @@ function isSelectedTextGuid(userSelection) {
   );
 }
 
-function askGPT() {
-  const gptCall = fetch("https://api.openai.com/v1/completions", {
+function askLlama2(promptDictionary) {
+  const llmCall = fetch("https://www.llama2.ai/api", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${YOUR_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "text-davinci-003",
-      prompt:
-        "I am a highly intelligent question answering bot. If you ask me a  Spain.\n\nQ: How many squigs are in a bonk?\nA: Unknown\n\nQ: Where is the Valley of Kings?\nA:",
-      temperature: 0,
-      max_tokens: 100,
-      top_p: 1,
-      frequency_penalty: 0.0,
-      presence_penalty: 0.0,
-      stop: ["\n"],
+      prompt: `<s>[INST] <<SYS>>\n${promptDictionary.systemPrompt}\n<</SYS>>\n\n${promptDictionary.userPrePrompt}:${selectedText}[/INST]\n`,
+      model: "meta/llama-2-70b-chat",
+      systemPrompt: `${promptDictionary.systemPrompt}`,
+      temperature: 0.75,
+      topP: 0.9,
+      maxTokens: 800,
+      image: null,
+      audio: null,
     }),
   });
 
-  gptCall.then((response) => {
-    console.log(response);
+  llmCall.then((response) => {
+    if (response.ok) {
+      response.text().then((text) => {
+        console.log(text);
+      });
+    }
   });
 }
 
@@ -178,5 +191,44 @@ function createNewTab(url) {
     chrome.tabs.create(tabProperties); // auto-focuses as of Chrome 33
   } else {
     chrome.tabs.getCurrent((tab) => chrome.tabs.update(tabProperties));
+  }
+}
+
+function getIntentFromTextAndUrl(selectedText, tabUrl) {
+  let intent = "unknown";
+  if (tabUrl.contains(".pdf")) {
+    intent = "specReview";
+  } else if (tabUrl.contains("portal.microsofticm.com")) {
+    intent = "error";
+  }
+
+  return intent;
+}
+
+function getPromptFromIntent(intent) {
+  switch (intent) {
+    case "specReview":
+      return {
+        systemPrompt:
+          "You are a Product Manager and your role is to create user stories for Azure Devops.",
+        userPrePrompt:
+          'Summarize the sentences to create a JSON list with the keys "unique_key", "title_of_item" and "description_of_item", "type_of_item", "parent_item_unique_key".The "type_of_item" can be either "user story" or "task". A task will have a parent user story',
+      };
+    case "error":
+      return {
+        systemPrompt:
+          "You are a helpful chat assistant for dynamics 365 and your role is to help the user with the error message.",
+        userPrePrompt:
+          'Summarize the sentences to create a JSON list with the keys "unique_key", "title_of_item" and "description_of_item", "type_of_item", "parent_item_unique_key".The "type_of_item" can be either "user story" or "task". A task will have a parent user story',
+      };
+    case "unknown":
+      return {
+        systemPrompt:
+          "You are a helpful chat assistant to help developers understand the code.",
+        userPrePrompt:
+          'Summarize the sentences to create a JSON list with the keys "unique_key", "title_of_item" and "description_of_item", "type_of_item", "parent_item_unique_key".The "type_of_item" can be either "user story" or "task". A task will have a parent user story',
+      };
+    default:
+      return {};
   }
 }

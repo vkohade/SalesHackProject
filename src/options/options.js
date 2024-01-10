@@ -7,15 +7,12 @@ document.addEventListener("DOMContentLoaded", function () {
     function (result) {
       document.getElementById("openInNewTab").checked = result.newTab || false;
       document.getElementById("companyName").value =
-        result.adoSettings.company || "";
+        result.adoSettings.company || "dynamicscrm";
       document.getElementById("projectName").value =
-        result.adoSettings.project || "";
+        result.adoSettings.project || "OneCRM";
 
       document.getElementById("configJson").value =
         result.kustoSettings.configJson || "";
-
-      document.getElementById("openAIApiKey").value =
-        result.openAISettings.apiKey || "";
     }
   );
 
@@ -25,7 +22,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const companyName = document.getElementById("companyName").value;
     const projectName = document.getElementById("projectName").value;
     const configJson = document.getElementById("configJson").value;
-    const openAIapiKey = document.getElementById("openAIApiKey").value;
 
     let options = {
       newTab: openInNewTab,
@@ -36,9 +32,6 @@ document.addEventListener("DOMContentLoaded", function () {
       kustoSettings: {
         configJson: configJson,
       },
-      openAISettings: {
-        apiKey: openAIapiKey,
-      },
     };
 
     // Save options to Chrome storage
@@ -47,15 +40,4 @@ document.addEventListener("DOMContentLoaded", function () {
       alert("Options saved!");
     });
   });
-});
-
-let showKeyToggle = document.getElementById("apiKeyShowToggle");
-
-showKeyToggle.addEventListener("click", function () {
-  let apiKey = document.getElementById("openAIApiKey");
-  if (apiKey.type === "password") {
-    apiKey.type = "text";
-  } else {
-    apiKey.type = "password";
-  }
 });

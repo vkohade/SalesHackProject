@@ -34,21 +34,12 @@
     <h3><span>Kusto Settings</span></h3>
 
     <div class="option">
-      <label for="configJson">Config Json</label>
-      <input type="text" id="configJson" placeholder="Enter JSON { Scenario: Query, Scenario1 : Query1}"">
-    </div>
-    
-
-    <h3><span>OpenAI Settings</span></h3>
-
-    <div class="option">
-      <label for="openAIApiKey">API Key:
-        <a href="https://platform.openai.com/api-keys" target="_blank">
-          <i class="fa fa-info-circle"></i>
-        </a>
+      <label for="configJson">Config Json
+        <i class="fa fa-info-circle">
+          <span title="Example: "></span>
+        </i>
       </label>
-      <input type="password" id="openAIApiKey" placeholder="Enter your API key">
-      <input type="checkbox" id="apiKeyShowToggle">Show key
+      <input type="text" id="configJson" placeholder="Enter JSON { Scenario: Query, Scenario1 : Query1}">
     </div>
 
     <button id="saveButton">Save</button>
