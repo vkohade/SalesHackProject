@@ -9,8 +9,8 @@ let form_newTab = document.getElementById("newTab");
 let button_settings = document.getElementById("settings");
 let input_query = document.getElementById("query");
 let flyoutMenu = document.getElementsByClassName("dropdown-content");
-let flyoutMenuItems;
 
+let flyoutMenuItems;
 let kusto_suffix =
   "&endpoint=https://powerappsclientneu.northeurope.kusto.windows.net";
 let kusto_prefix =
@@ -19,13 +19,14 @@ let adoBaseUrl;
 let kustoBaseUrl;
 let unifyBaseUrl = "https://unify.services.dynamics.com/CRM/Org";
 let configJson = {};
+let tabUrl = "";
 
-chrome.storage.sync.get(
-  { adoSettings: {}, kustoSettings: {}, newTab: true },
-  function (items) {
+chrome.storage.sync
+  .get({ adoSettings: {}, kustoSettings: {}, newTab: true })
+  .then((items) => {
+    console.log(JSON.stringify(items));
     let companyName = items.adoSettings.company || "dynamicscrm";
     let projectName = items.adoSettings.project || "OneCRM";
-    configJson = JSON.parse(items.kustoSettings.configJson);
 
     // make sure they're both present
     if (
@@ -41,48 +42,42 @@ chrome.storage.sync.get(
     form_newTab.checked = items.newTab;
     adoBaseUrl = `https://dev.azure.com/${companyName}/${projectName}`;
 
-    // Create a new link for each kusto scenario and add it to the flyout menu
-    for (const [key, value] of Object.entries(configJson)) {
-      var link = document.createElement("div");
-      link.className = "dropdown-items";
-      link.id = key;
-      link.innerHTML = key;
-      flyoutMenu[0].appendChild(link);
-    }
+    if (
+      items.kustoSettings.configJson !== undefined &&
+      items.kustoSettings.configJson !== ""
+    ) {
+      configJson = JSON.parse(items.kustoSettings.configJson);
 
-    flyoutMenuItems = document.getElementsByClassName("dropdown-items");
+      // Create a new link for each kusto scenario and add it to the flyout menu
+      for (const [key, value] of Object.entries(configJson)) {
+        var link = document.createElement("div");
+        link.className = "dropdown-items";
+        link.id = key;
+        link.innerHTML = key;
+        flyoutMenu[0].appendChild(link);
+      }
 
-    Array.from(flyoutMenuItems).forEach((element) => {
-      element.addEventListener("click", () => {
-        let finalKustoQuery =
-          kustoBaseUrl + configJson[element.id] + kusto_suffix;
-        console.log(finalKustoQuery);
-        createNewTab(finalKustoQuery);
+      flyoutMenuItems = document.getElementsByClassName("dropdown-items");
+
+      Array.from(flyoutMenuItems).forEach((element) => {
+        element.addEventListener("click", () => {
+          let finalKustoQuery =
+            kustoBaseUrl + configJson[element.id] + kusto_suffix;
+          console.log(finalKustoQuery);
+          createNewTab(finalKustoQuery);
+        });
       });
-    });
-  }
-);
+    }
+  });
 
-var replacer = function (tpl, data) {
-  var re = /\$\(([^\)]+)?\)/g,
-    match;
-  while ((match = re.exec(tpl))) {
-    tpl = tpl.replace(match[0], data[match[1]]);
-    re.lastIndex = 0;
-  }
-  return tpl;
-};
-
-// setup triggers
+//#region Event Handlers
 button_settings.onclick = function () {
   chrome.runtime.openOptionsPage();
 };
 
 ado_search.onclick = function () {
   let search = input_query.value;
-
   let fullADOUrl = adoBaseUrl + `/_search?text=${search}&type=workitem`;
-
   createNewTab(fullADOUrl);
 };
 
@@ -93,10 +88,39 @@ unify_search.onclick = function () {
   createNewTab(`${unifyBaseUrl}/${search}`);
 };
 
+input_query.onchange = inputQueryOnChangeHandler;
+
+function inputQueryOnChangeHandler() {
+  if (input_query.value.length === 0) {
+    ado_search.disabled = true;
+    unify_search.style.display = "none";
+    kusto_search.style.display = "none";
+  } else {
+    ado_search.disabled = false;
+    if (isInputTextGuid(input_query.value)) {
+      unify_search.style.display = "block";
+      kusto_search.style.display = "block";
+
+      for (const [key, value] of Object.entries(configJson)) {
+        configJson[key] = replacer(value, {
+          Guid: `"${input_query.value}"`,
+        });
+      }
+      kustoBaseUrl = `${kusto_prefix}`; //${configData}${kusto_suffix}
+    } else {
+      unify_search.style.display = "none";
+      kusto_search.style.display = "none";
+    }
+
+    // let intent = getIntentFromTextAndUrl(input_query.value, tabUrl);
+    // let promptDictionary = getPromptFromIntent(intent);
+    // askLlama2(promptDictionary, input_query.value);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   chrome.tabs.query({ active: true, currentWindow: true }).then((resp) => {
     const [tab] = resp;
-    let selectedText = "";
     try {
       chrome.scripting
         .executeScript({
@@ -105,37 +129,10 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then((resp) => {
           console.log(resp);
-          if (!resp || resp.length === 0) {
-            document.getElementById("query").value = "Please select some text";
-            return;
-          } else {
-            selectedText = resp[0].result;
-          }
-          if (selectedText.length === 0) {
-            ado_search.disabled = true;
-            unify_search.style.display = "none";
-            kusto_search.style.display = "none";
-          } else {
-            document.getElementById("query").value = selectedText;
-
-            if (isSelectedTextGuid(selectedText)) {
-              unify_search.style.display = "block";
-              kusto_search.style.display = "block";
-
-              for (const [key, value] of Object.entries(configJson)) {
-                configJson[key] = replacer(value, {
-                  Guid: `"${input_query.value}"`,
-                });
-              }
-              kustoBaseUrl = `${kusto_prefix}`; //${configData}${kusto_suffix}
-            } else {
-              unify_search.style.display = "none";
-              kusto_search.style.display = "none";
-            }
-
-            let intent = getIntentFromTextAndUrl(selectedText, tab.url);
-            let promptDictionary = getPromptFromIntent(intent);
-            askLlama2(promptDictionary);
+          if (!resp || resp.length !== 0) {
+            input_query.value = resp[0].result;
+            tabUrl = tab.url;
+            inputQueryOnChangeHandler();
           }
         });
       return;
@@ -145,8 +142,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+//#endregion
 
-function isSelectedTextGuid(userSelection) {
+//#region Utilities
+function isInputTextGuid(userSelection) {
   // Remove whitespaces from the selection first
   userSelection = userSelection.replace(/\s/g, "");
 
@@ -155,14 +154,38 @@ function isSelectedTextGuid(userSelection) {
   );
 }
 
-function askLlama2(promptDictionary) {
+function createNewTab(url) {
+  let tabProperties = {
+    url: url,
+  };
+
+  if (form_newTab.checked) {
+    chrome.tabs.create(tabProperties); // auto-focuses as of Chrome 33
+  } else {
+    chrome.tabs.getCurrent((tab) => chrome.tabs.update(tabProperties));
+  }
+}
+
+var replacer = function (tpl, data) {
+  var re = /\$\(([^\)]+)?\)/g,
+    match;
+  while ((match = re.exec(tpl))) {
+    tpl = tpl.replace(match[0], data[match[1]]);
+    re.lastIndex = 0;
+  }
+  return tpl;
+};
+//#endregion
+
+//#region AI related functions
+function askLlama2(promptDictionary, inputText) {
   const llmCall = fetch("https://www.llama2.ai/api", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      prompt: `<s>[INST] <<SYS>>\n${promptDictionary.systemPrompt}\n<</SYS>>\n\n${promptDictionary.userPrePrompt}:${selectedText}[/INST]\n`,
+      prompt: `<s>[INST] <<SYS>>\n${promptDictionary.systemPrompt}\n<</SYS>>\n\n${promptDictionary.userPrePrompt}:${inputText}[/INST]\n`,
       model: "meta/llama-2-70b-chat",
       systemPrompt: `${promptDictionary.systemPrompt}`,
       temperature: 0.75,
@@ -182,23 +205,11 @@ function askLlama2(promptDictionary) {
   });
 }
 
-function createNewTab(url) {
-  let tabProperties = {
-    url: url,
-  };
-
-  if (form_newTab.checked) {
-    chrome.tabs.create(tabProperties); // auto-focuses as of Chrome 33
-  } else {
-    chrome.tabs.getCurrent((tab) => chrome.tabs.update(tabProperties));
-  }
-}
-
 function getIntentFromTextAndUrl(selectedText, tabUrl) {
   let intent = "unknown";
-  if (tabUrl.contains(".pdf")) {
+  if (tabUrl.includes(".pdf")) {
     intent = "specReview";
-  } else if (tabUrl.contains("portal.microsofticm.com")) {
+  } else if (tabUrl.includes("portal.microsofticm.com")) {
     intent = "error";
   }
 
@@ -232,3 +243,5 @@ function getPromptFromIntent(intent) {
       return {};
   }
 }
+
+//#endregion
