@@ -9,6 +9,8 @@ let form_newTab = document.getElementById("newTab");
 let button_settings = document.getElementById("settings");
 let input_query = document.getElementById("query");
 let flyoutMenu = document.getElementsByClassName("dropdown-content");
+let aiInsightsButton = document.getElementById("get-ai-insights");
+let insightsContent = document.getElementById("ai-insights-results");
 
 let flyoutMenuItems;
 let kusto_suffix =
@@ -46,11 +48,13 @@ function inputQueryOnChangeHandler() {
     ado_search.disabled = true;
     unify_search.style.display = "none";
     kusto_search.style.display = "none";
+    aiInsightsButton.style.display = "none";
   } else {
     ado_search.disabled = false;
     if (isInputTextGuid(input_query.value)) {
       unify_search.style.display = "block";
       kusto_search.style.display = "block";
+      aiInsightsButton.style.display = "none";
 
       for (const [key, value] of Object.entries(configJson)) {
         configJson[key] = replacer(value, {
@@ -61,15 +65,20 @@ function inputQueryOnChangeHandler() {
     } else {
       unify_search.style.display = "none";
       kusto_search.style.display = "none";
+      aiInsightsButton.style.display = "block";
     }
-
-    let intent = getIntentFromTextAndUrl(input_query.value, tabUrl);
-    let promptDictionary = getPromptFromIntent(intent);
-    askLlama2(promptDictionary, input_query.value).then((llama2OutputString) => {
-      console.log(llama2OutputString);
-    });
   }
 }
+
+aiInsightsButton.onclick = function () {
+  let intent = getIntentFromTextAndUrl(input_query.value, tabUrl);
+  let promptDictionary = getPromptFromIntent(intent);
+  insightsContent.textContent = "loading insights";
+  askLlama2(promptDictionary, input_query.value).then((llama2OutputString) => {
+    console.log(llama2OutputString);
+    insightsContent.textContent = llama2OutputString;
+  });
+};
 
 document.addEventListener("DOMContentLoaded", function () {
   setGlobalVariablesFromConfig();
@@ -166,7 +175,7 @@ function getIntentFromTextAndUrl(selectedText, tabUrl) {
   if (tabUrl.includes(".pdf") || tabUrl.includes(".docx")) {
     intent = "specReview";
   } else if (tabUrl.includes("portal.microsofticm.com")) {
-    intent = "error";
+    intent = "debug";
   }
 
   return intent;
@@ -181,19 +190,19 @@ function getPromptFromIntent(intent) {
         userPrePrompt:
           "Generate a JSON document from the input text representing an array of work items as user stories and tasks. Every item in the JSON array should have the following structure: 'unique_key' representing a unique number; 'title_of_item' having a string value respresenting a very short title for the work item; 'description_of_item' having a string value respresenting description of the work item; 'type_of_item' having a string value which can be either 'userstory' or 'task'; 'parent_item_unique_key' for linking tasks to a user story. Give parentId as -1 to user stories. The generated JSON should conform to this structure. Do not include any additional or invalid keys. Surround your JSON output with <result></result> tags.",
       };
-    case "error":
+    case "debug":
       return {
         systemPrompt:
-          "You are a helpful chat assistant for dynamics 365 and your role is to help the user understand the error message.",
+          "You are an AI code and code error assistant that explains code and error messages and exceptions.",
         userPrePrompt:
-          "Explain the error message and also provide possible solutions to resolve the error or provide scenarios when this error can occur.",
+          "Help me understand this text which is either an error or a code snippet. If the message is an error use the context of Dynamics 365, explain the error message and provide ways to resolve it. If the message is a code snippet, then explain the code. Be concise and straightforward in your answer. ",
       };
     case "unknown":
       return {
         systemPrompt:
           "You are an AI code and code error assistant that explains code and error messages and exceptions.",
         userPrePrompt:
-          "Help me understand this text which is either an error or a code snippet. Auto detect the category and explain the details of this text. For error messages use the context of dynamics 365. Be concise and straightforward in your answer.",
+          "Help me understand this text which is either an error or a code snippet. Auto detect the category and explain the details of this text. Be concise and straightforward in your answer.",
       };
     default:
       return {};
