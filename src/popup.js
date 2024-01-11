@@ -21,55 +21,6 @@ let unifyBaseUrl = "https://unify.services.dynamics.com/CRM/Org";
 let configJson = {};
 let tabUrl = "";
 
-chrome.storage.sync
-  .get({ adoSettings: {}, kustoSettings: {}, newTab: true })
-  .then((items) => {
-    console.log(JSON.stringify(items));
-    let companyName = items.adoSettings.company || "dynamicscrm";
-    let projectName = items.adoSettings.project || "OneCRM";
-
-    // make sure they're both present
-    if (
-      !(companyName && companyName.length > 0) ||
-      !(projectName && projectName.length > 0)
-    ) {
-      span_company.textContent = "[OPTIONS NOT SET]";
-      ado_search.disabled = true;
-    }
-
-    span_company.textContent = companyName;
-    span_projectName.textContent = projectName;
-    form_newTab.checked = items.newTab;
-    adoBaseUrl = `https://dev.azure.com/${companyName}/${projectName}`;
-
-    if (
-      items.kustoSettings.configJson !== undefined &&
-      items.kustoSettings.configJson !== ""
-    ) {
-      configJson = JSON.parse(items.kustoSettings.configJson);
-
-      // Create a new link for each kusto scenario and add it to the flyout menu
-      for (const [key, value] of Object.entries(configJson)) {
-        var link = document.createElement("div");
-        link.className = "dropdown-items";
-        link.id = key;
-        link.innerHTML = key;
-        flyoutMenu[0].appendChild(link);
-      }
-
-      flyoutMenuItems = document.getElementsByClassName("dropdown-items");
-
-      Array.from(flyoutMenuItems).forEach((element) => {
-        element.addEventListener("click", () => {
-          let finalKustoQuery =
-            kustoBaseUrl + configJson[element.id] + kusto_suffix;
-          console.log(finalKustoQuery);
-          createNewTab(finalKustoQuery);
-        });
-      });
-    }
-  });
-
 //#region Event Handlers
 button_settings.onclick = function () {
   chrome.runtime.openOptionsPage();
@@ -88,7 +39,7 @@ unify_search.onclick = function () {
   createNewTab(`${unifyBaseUrl}/${search}`);
 };
 
-input_query.onchange = inputQueryOnChangeHandler;
+input_query.oninput = inputQueryOnChangeHandler;
 
 function inputQueryOnChangeHandler() {
   if (input_query.value.length === 0) {
@@ -112,13 +63,16 @@ function inputQueryOnChangeHandler() {
       kusto_search.style.display = "none";
     }
 
-    // let intent = getIntentFromTextAndUrl(input_query.value, tabUrl);
-    // let promptDictionary = getPromptFromIntent(intent);
-    // askLlama2(promptDictionary, input_query.value);
+    let intent = getIntentFromTextAndUrl(input_query.value, tabUrl);
+    let promptDictionary = getPromptFromIntent(intent);
+    askLlama2(promptDictionary, input_query.value).then((jsonOutputString) => {
+      console.log(jsonOutputString);
+    });
   }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  setGlobalVariablesFromConfig();
   chrome.tabs.query({ active: true, currentWindow: true }).then((resp) => {
     const [tab] = resp;
     try {
@@ -128,7 +82,6 @@ document.addEventListener("DOMContentLoaded", function () {
           func: () => getSelection().toString(),
         })
         .then((resp) => {
-          console.log(resp);
           if (!resp || resp.length !== 0) {
             input_query.value = resp[0].result;
             tabUrl = tab.url;
@@ -178,14 +131,14 @@ var replacer = function (tpl, data) {
 //#endregion
 
 //#region AI related functions
-function askLlama2(promptDictionary, inputText) {
+async function askLlama2(promptDictionary, inputText) {
   const llmCall = fetch("https://www.llama2.ai/api", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      prompt: `<s>[INST] <<SYS>>\n${promptDictionary.systemPrompt}\n<</SYS>>\n\n${promptDictionary.userPrePrompt}:${inputText}[/INST]\n`,
+      prompt: `<s>[INST] <<SYS>>\n${promptDictionary.userPrePrompt}\n<</SYS>>\n\n${inputText}[/INST]\n`,
       model: "meta/llama-2-70b-chat",
       systemPrompt: `${promptDictionary.systemPrompt}`,
       temperature: 0.75,
@@ -196,18 +149,17 @@ function askLlama2(promptDictionary, inputText) {
     }),
   });
 
-  llmCall.then((response) => {
-    if (response.ok) {
-      response.text().then((text) => {
-        console.log(text);
-      });
-    }
-  });
+  const response = await llmCall;
+  if (response.ok) {
+    const text = await response.text();
+    let jsonOutput = text.split("<result>")[1].split("</result>")[0];
+    return jsonOutput;
+  }
 }
 
 function getIntentFromTextAndUrl(selectedText, tabUrl) {
   let intent = "unknown";
-  if (tabUrl.includes(".pdf")) {
+  if (tabUrl.includes(".pdf") || tabUrl.includes(".docx")) {
     intent = "specReview";
   } else if (tabUrl.includes("portal.microsofticm.com")) {
     intent = "error";
@@ -221,16 +173,16 @@ function getPromptFromIntent(intent) {
     case "specReview":
       return {
         systemPrompt:
-          "You are a Product Manager and your role is to create user stories for Azure Devops.",
+          "You are a JSON document generator assisting a product manager to create user stories and tasks from the spec review document",
         userPrePrompt:
-          'Summarize the sentences to create a JSON list with the keys "unique_key", "title_of_item" and "description_of_item", "type_of_item", "parent_item_unique_key".The "type_of_item" can be either "user story" or "task". A task will have a parent user story',
+          "Generate a JSON document from the input text representing an array of work items as user stories and tasks. Every item in the JSON array should have the following structure: 'unique_key' representing a unique number; 'title_of_item' having a string value respresenting a very short title for the work item; 'description_of_item' having a string value respresenting description of the work item; 'type_of_item' having a string value which can be either 'userstory' or 'task'; 'parent_item_unique_key' for linking tasks to a user story. Give parentId as -1 to user stories. The generated JSON should conform to this structure. Do not include any additional or invalid keys. Surround your JSON output with <result></result> tags.",
       };
     case "error":
       return {
         systemPrompt:
-          "You are a helpful chat assistant for dynamics 365 and your role is to help the user with the error message.",
+          "You are a helpful chat assistant for dynamics 365 and your role is to help the user understand the error message.",
         userPrePrompt:
-          'Summarize the sentences to create a JSON list with the keys "unique_key", "title_of_item" and "description_of_item", "type_of_item", "parent_item_unique_key".The "type_of_item" can be either "user story" or "task". A task will have a parent user story',
+          "Explain the error message and also provide possible solutions to resolve the error or provide scenarios when this error can occur.",
       };
     case "unknown":
       return {
@@ -245,3 +197,52 @@ function getPromptFromIntent(intent) {
 }
 
 //#endregion
+
+function setGlobalVariablesFromConfig() {
+  chrome.storage.sync
+    .get({ adoSettings: {}, kustoSettings: {}, newTab: true })
+    .then((items) => {
+      let companyName = items.adoSettings.company || "dynamicscrm";
+      let projectName = items.adoSettings.project || "OneCRM";
+
+      // make sure they're both present
+      if (
+        !(companyName && companyName.length > 0) ||
+        !(projectName && projectName.length > 0)
+      ) {
+        span_company.textContent = "[OPTIONS NOT SET]";
+        ado_search.disabled = true;
+      }
+
+      span_company.textContent = companyName;
+      span_projectName.textContent = projectName;
+      form_newTab.checked = items.newTab;
+      adoBaseUrl = `https://dev.azure.com/${companyName}/${projectName}`;
+
+      if (
+        items.kustoSettings.configJson !== undefined &&
+        items.kustoSettings.configJson !== ""
+      ) {
+        configJson = JSON.parse(items.kustoSettings.configJson);
+
+        // Create a new link for each kusto scenario and add it to the flyout menu
+        for (const [key, value] of Object.entries(configJson)) {
+          var link = document.createElement("div");
+          link.className = "dropdown-items";
+          link.id = key;
+          link.innerHTML = key;
+          flyoutMenu[0].appendChild(link);
+        }
+
+        flyoutMenuItems = document.getElementsByClassName("dropdown-items");
+
+        Array.from(flyoutMenuItems).forEach((element) => {
+          element.addEventListener("click", () => {
+            let finalKustoQuery =
+              kustoBaseUrl + configJson[element.id] + kusto_suffix;
+            createNewTab(finalKustoQuery);
+          });
+        });
+      }
+    });
+}
