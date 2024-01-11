@@ -28,14 +28,18 @@
     "storage",
     "activeTab",
     "contextMenus",
-    "scripting"
+    "scripting",
+    "cookies",
+    "tabs",
+    "https://dev.azure.com/"
   ],
+  "host_permissions": ["https://dev.azure.com/"],
   "commands": {
     "_execute_browser_action": {
-        "suggested_key": {
-            "mac": "Ctrl+Shift+A",
-            "windows": "Alt+Shift+A"
-        }
+      "suggested_key": {
+        "mac": "Ctrl+Shift+A",
+        "windows": "Alt+Shift+A"
+      }
     }
   },
   "content_scripts": [
