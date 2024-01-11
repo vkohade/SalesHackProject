@@ -9,7 +9,6 @@
         integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
     <link rel="stylesheet" href="popup.css">
 </head>
-
 <body>
     <div class="content">
         <h2>Search Azure Devops</h2>
@@ -23,7 +22,7 @@
 
         <form id="search" class="pure-form pure-g">
             <div class="pure-u-4-5">
-                <input class="full-width" id="query" type="text" hint="search..." autofocus="">
+                <input class="full-width" id="query" type="text" placeholder="Please select or type some text" autofocus="">
             </div>
             <div class="pure-u-1-5 muted" style="text-align: center;">
                 New tab
@@ -42,14 +41,19 @@
                 <button id="search-in-unify" class="pure-button full-width" type="submit" tooltip="Search in Unify">
                     <i class="fa fa-search"></i> Search in Unify
                 </button>
-                <button id="query-in-kusto" class="pure-button full-width" type="submit" tooltip="Search in Kusto">
+                <!-- <button id="query-in-kusto" class="pure-button full-width" type="submit" tooltip="Search in Kusto">
                     <i class="fa fa-search"></i> Query in Kusto
-                </button>
+                </button> -->
+                <div class="dropdown" id="dropdown">
+                    <button class="dropbtn">Search in Kusto</button>
+                    <div class="dropdown-content"></div>
+                </div>
             </div>
         </form>
-         <button id="create-ado-work-item" class="pure-button full-width"  tooltip="Create ADO Work Item">
-                    <i class="fa fa-search"></i> Create ADO Work Item
-         </button>
+        <button id="get-ai-insights" class="pure-button full-width" type="submit" tooltip="Get AI Insights">
+            Get AI insights
+        </button>
+        <div id="ai-insights-results" style="white-space: pre-line"></div>
     </div>
     <script src="popup.js"></script>
 </body>

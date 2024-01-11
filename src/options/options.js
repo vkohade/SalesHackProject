@@ -7,19 +7,12 @@ document.addEventListener("DOMContentLoaded", function () {
     function (result) {
       document.getElementById("openInNewTab").checked = result.newTab || false;
       document.getElementById("companyName").value =
-        result.adoSettings.company || "";
+        result.adoSettings.company || "dynamicscrm";
       document.getElementById("projectName").value =
-        result.adoSettings.project || "";
+        result.adoSettings.project || "OneCRM";
 
-      document.getElementById("clusterName").value =
-        result.kustoSettings.cluster || "";
-      document.getElementById("databaseName").value =
-        result.kustoSettings.database || "";
-      document.getElementById("tableName").value =
-        result.kustoSettings.table || "";
-
-      document.getElementById("openAIApiKey").value =
-        result.openAISettings.apiKey || "";
+      document.getElementById("configJson").value =
+        result.kustoSettings.configJson || "";
     }
   );
 
@@ -28,10 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const openInNewTab = document.getElementById("openInNewTab").checked;
     const companyName = document.getElementById("companyName").value;
     const projectName = document.getElementById("projectName").value;
-    const clusterName = document.getElementById("clusterName").value;
-    const databaseName = document.getElementById("databaseName").value;
-    const tableName = document.getElementById("tableName").value;
-    const openAIapiKey = document.getElementById("openAIApiKey").value;
+    const configJson = document.getElementById("configJson").value;
 
     let options = {
       newTab: openInNewTab,
@@ -40,12 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
         project: projectName,
       },
       kustoSettings: {
-        cluster: clusterName,
-        database: databaseName,
-        table: tableName,
-      },
-      openAISettings: {
-        apiKey: openAIapiKey,
+        configJson: configJson,
       },
     };
 
@@ -55,15 +40,4 @@ document.addEventListener("DOMContentLoaded", function () {
       alert("Options saved!");
     });
   });
-});
-
-let showKeyToggle = document.getElementById("apiKeyShowToggle");
-
-showKeyToggle.addEventListener("click", function () {
-  let apiKey = document.getElementById("openAIApiKey");
-  if (apiKey.type === "password") {
-    apiKey.type = "text";
-  } else {
-    apiKey.type = "password";
-  }
 });
