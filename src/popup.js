@@ -65,8 +65,8 @@ function inputQueryOnChangeHandler() {
 
     let intent = getIntentFromTextAndUrl(input_query.value, tabUrl);
     let promptDictionary = getPromptFromIntent(intent);
-    askLlama2(promptDictionary, input_query.value).then((jsonOutputString) => {
-      console.log(jsonOutputString);
+    askLlama2(promptDictionary, input_query.value).then((llama2OutputString) => {
+      console.log(llama2OutputString);
     });
   }
 }
@@ -152,8 +152,12 @@ async function askLlama2(promptDictionary, inputText) {
   const response = await llmCall;
   if (response.ok) {
     const text = await response.text();
-    let jsonOutput = text.split("<result>")[1].split("</result>")[0];
-    return jsonOutput;
+    if (text.includes("<result>")) {
+      let jsonOutput = text.split("<result>")[1].split("</result>")[0];
+      return jsonOutput;
+    } else {
+      return text;
+    }
   }
 }
 
@@ -187,9 +191,9 @@ function getPromptFromIntent(intent) {
     case "unknown":
       return {
         systemPrompt:
-          "You are a helpful chat assistant to help developers understand the code.",
+          "You are an AI code and code error assistant that explains code and error messages and exceptions.",
         userPrePrompt:
-          'Summarize the sentences to create a JSON list with the keys "unique_key", "title_of_item" and "description_of_item", "type_of_item", "parent_item_unique_key".The "type_of_item" can be either "user story" or "task". A task will have a parent user story',
+          "Help me understand this text which is either an error or a code snippet. Auto detect the category and explain the details of this text. For error messages use the context of dynamics 365. Be concise and straightforward in your answer.",
       };
     default:
       return {};
