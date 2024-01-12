@@ -1,16 +1,22 @@
-import "./popup.css";
+import './popup.css'
+import { createParentUserStoryAndChildTask } from './ADOCreateWorkItem'
+import { generateInsightsHTML,showLoader,hideLoader, showCreatedWorkItems } from './utils'
 
-let span_company = document.getElementById("company");
-let span_projectName = document.getElementById("projectName");
-let ado_search = document.getElementById("search-in-ado");
-let unify_search = document.getElementById("search-in-unify");
-let kusto_search = document.getElementById("dropdown");
-let form_newTab = document.getElementById("newTab");
-let button_settings = document.getElementById("settings");
-let input_query = document.getElementById("query");
-let flyoutMenu = document.getElementsByClassName("dropdown-content");
-let aiInsightsButton = document.getElementById("get-ai-insights");
-let insightsContent = document.getElementById("ai-insights-results");
+let span_company = document.getElementById('company')
+let span_projectName = document.getElementById('projectName')
+let ado_search = document.getElementById('search-in-ado')
+let unify_search = document.getElementById('search-in-unify')
+let kusto_search = document.getElementById('dropdown')
+let form_newTab = document.getElementById('newTab')
+let button_settings = document.getElementById('settings')
+let input_query = document.getElementById('query')
+let flyoutMenu = document.getElementsByClassName('dropdown-content')
+let aiInsightsButton = document.getElementById('get-ai-insights')
+let insightsContent = document.getElementById('ai-insights-results')
+let createWorkItemContent = document.getElementById('create-work-item-results')
+let ado_create_work_item = document.getElementById('create-ado-work-item')
+let create_work_item_loader = document.getElementById('create-work-item-loader')
+let llamaOutput = ''
 
 let flyoutMenuItems;
 let kusto_suffix =
@@ -25,8 +31,8 @@ let tabUrl = "";
 
 //#region Event Handlers
 button_settings.onclick = function () {
-  chrome.runtime.openOptionsPage();
-};
+  chrome.runtime.openOptionsPage()
+}
 
 ado_search.onclick = function () {
   let search = input_query.value;
@@ -45,40 +51,101 @@ input_query.oninput = inputQueryOnChangeHandler;
 
 function inputQueryOnChangeHandler() {
   if (input_query.value.length === 0) {
-    ado_search.disabled = true;
-    unify_search.style.display = "none";
-    kusto_search.style.display = "none";
-    aiInsightsButton.style.display = "none";
+    ado_search.disabled = true
+    ado_create_work_item.disabled = true
+    unify_search.style.display = 'none'
+    kusto_search.style.display = 'none'
+    aiInsightsButton.style.display = 'none'
+    insightsContent.style.display = 'none'
+    createWorkItemContent.style.display='none'
+    ado_create_work_item.style.display = 'none'
+    createWorkItemContent.style.display='none'
   } else {
-    ado_search.disabled = false;
-    if (isInputTextGuid(input_query.value)) {
-      unify_search.style.display = "block";
-      kusto_search.style.display = "block";
-      aiInsightsButton.style.display = "none";
+    ado_search.disabled = false
 
+    if (isInputTextGuid(input_query.value)) {
+      unify_search.style.display = 'block'
+      kusto_search.style.display = 'block'
+      aiInsightsButton.style.display = 'none'
+      ado_create_work_item.style.display = 'none'
+      insightsContent.style.display = 'none'
+      createWorkItemContent.style.display='none'
       for (const [key, value] of Object.entries(configJson)) {
         configJson[key] = replacer(value, {
           Guid: `"${input_query.value}"`,
-        });
+        })
       }
-      kustoBaseUrl = `${kusto_prefix}`; //${configData}${kusto_suffix}
+      kustoBaseUrl = `${kusto_prefix}` //${configData}${kusto_suffix}
     } else {
-      unify_search.style.display = "none";
-      kusto_search.style.display = "none";
-      aiInsightsButton.style.display = "block";
+      unify_search.style.display = 'none'
+      kusto_search.style.display = 'none'
+      aiInsightsButton.style.display = 'block'
+      insightsContent.style.display = 'none'
+      createWorkItemContent.style.display='none'
+      ado_create_work_item.style.display = 'block'
     }
   }
 }
 
+ado_create_work_item.onclick = async function () {
+  insightsContent.style.display='none'
+  createWorkItemContent.style.display='block'
+  createWorkItemContent.textContent="Creating work items..."
+  
+  showLoader('create-work-item-loader')
+  try {
+    const cookies = await chrome.cookies.getAll({
+      url: 'https://dev.azure.com',
+    })
+    if (cookies && cookies.length > 0) {
+      const cookieString = cookies
+        .map((cookie) => `${cookie.name}=${cookie.value}`)
+        .join('; ')
+      const createdWorkItems = await createParentUserStoryAndChildTask(
+        adoBaseUrl,cookieString,
+        JSON.parse(llamaOutput)
+      )
+      await showCreatedWorkItems(adoBaseUrl,createdWorkItems)
+      hideLoader('create-work-item-loader')
+    } else {
+      redirectToAzureDevOpsLogin()
+    }
+  } catch (error) {
+    console.error('Error getting cookieString:', error)
+  }
+}
+
+function redirectToAzureDevOpsLogin() {
+  chrome.tabs.create({
+    url: 'https://dev.azure.com/dynamicscrm',
+  })
+}
+
 aiInsightsButton.onclick = function () {
-  let intent = getIntentFromTextAndUrl(input_query.value, tabUrl);
-  let promptDictionary = getPromptFromIntent(intent);
-  insightsContent.textContent = "loading insights";
+  let intent = getIntentFromTextAndUrl(input_query.value, tabUrl)
+  llamaOutput=''
+  let promptDictionary = getPromptFromIntent(intent)
+  createWorkItemContent.style.display ='none'
+  ado_create_work_item.disabled=true
+  create_work_item_loader.style.display='none'
+  insightsContent.style.display = 'block'
+  insightsContent.textContent = 'Loading insights...'
+  showLoader('get-AI-insights-loader') // Show loader while fetching insights
   askLlama2(promptDictionary, input_query.value).then((llama2OutputString) => {
-    console.log(llama2OutputString);
-    insightsContent.textContent = llama2OutputString;
-  });
-};
+    llamaOutput = llama2OutputString
+    console.log(llama2OutputString)
+    if (intent == 'specReview') {
+      document.getElementById('popup-body-id').style.width = '600px'
+      llamaOutput?insightsContent.innerHTML = generateInsightsHTML(
+        JSON.parse(llama2OutputString)
+      ):null
+    } else insightsContent.textContent = llama2OutputString
+    hideLoader('get-AI-insights-loader') // Hide loader when insights are loaded
+    ado_create_work_item.disabled = intent !== 'specReview'
+  })
+}
+
+
 
 document.addEventListener("DOMContentLoaded", function () {
   setGlobalVariablesFromConfig();
@@ -96,11 +163,11 @@ document.addEventListener("DOMContentLoaded", function () {
             tabUrl = tab.url;
             inputQueryOnChangeHandler();
           }
-        });
-      return;
+        })
+      return
     } catch (e) {
-      console.log(e);
-      return;
+      console.log(e)
+      return
     }
   });
 });
@@ -109,22 +176,22 @@ document.addEventListener("DOMContentLoaded", function () {
 //#region Utilities
 function isInputTextGuid(userSelection) {
   // Remove whitespaces from the selection first
-  userSelection = userSelection.replace(/\s/g, "");
+  userSelection = userSelection.replace(/\s/g, '')
 
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     userSelection
-  );
+  )
 }
 
 function createNewTab(url) {
   let tabProperties = {
     url: url,
-  };
+  }
 
   if (form_newTab.checked) {
-    chrome.tabs.create(tabProperties); // auto-focuses as of Chrome 33
+    chrome.tabs.create(tabProperties) // auto-focuses as of Chrome 33
   } else {
-    chrome.tabs.getCurrent((tab) => chrome.tabs.update(tabProperties));
+    chrome.tabs.getCurrent((tab) => chrome.tabs.update(tabProperties))
   }
 }
 
