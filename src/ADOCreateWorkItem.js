@@ -1,7 +1,9 @@
 export async function createParentUserStoryAndChildTask(
   adoBaseUrl,
   cookieString,
-  promptData
+  promptData,
+  selectedAreaPath,
+  selectedIterationPath
 ) {
   const uniqueWorkItemNameToWorkItemId = {}
   let createdWorkItems = []
@@ -26,6 +28,18 @@ export async function createParentUserStoryAndChildTask(
           path: '/fields/System.Description',
           from: null,
           value: data.description_of_item,
+        },
+        {
+          op: 'add',
+          path: '/fields/System.AreaPath',
+          from: null,
+          value: selectedAreaPath,
+        },
+        {
+          op: 'add',
+          path: '/fields/System.IterationPath',
+          from: null,
+          value: selectedIterationPath,
         },
       ]
 
@@ -77,17 +91,30 @@ export async function createParentUserStoryAndChildTask(
           },
           {
             op: 'add',
+            path: '/fields/System.AreaPath',
+            from: null,
+            value: selectedAreaPath,
+          },
+          {
+            op: 'add',
+            path: '/fields/System.IterationPath',
+            from: null,
+            value: selectedIterationPath,
+          },
+          {
+            op: 'add',
             path: '/relations/-',
             value: {
               rel: 'System.LinkTypes.Hierarchy-Reverse',
-              url: adoBaseUrl +`/${parentUserStoryId}`,
+              url: adoBaseUrl + `/${parentUserStoryId}`,
               attributes: {
                 comment: 'Parent',
               },
             },
           },
         ]
-        const taskResponse = await makeAuthenticatedRequest(adoBaseUrl,
+        const taskResponse = await makeAuthenticatedRequest(
+          adoBaseUrl,
           cookieString,
           taskPayload,
           'Task'

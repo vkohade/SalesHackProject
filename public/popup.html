@@ -57,6 +57,22 @@
         <button id="create-ado-work-item" class="pure-button full-width"  title="Create Work Item in Azure DevOps">
             <i class="fa fa-plus" style="padding-right: 3px;" ></i> Create Work Item
         </button>
+        
+        <div id="select-work-item-area-dropdown" class="option" style="display: flex;gap: 10px;width: 100%;">
+            <label for="areaDropdown" title="Select area">Area:</label>
+            <select id="areaDropdown" style="flex-grow: 1;">
+                <!-- Area options will be dynamically populated here -->
+            </select>
+        </div>
+
+        <div class="select-work-item-iteration-dropdown" style="display: flex; gap: 10px; width: 100%;">
+            <label for="iterationDropdown" title="Select iteration path">Iteration:</label>
+            <select id="iterationDropdown" style="flex-grow: 1;">
+                <!-- Iteration options will be dynamically populated here -->
+            </select>
+        </div>
+
+        
         <div id="ai-insights-results" style="white-space: pre-line;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;font-weight: 400;font-size: medium;"></div>
         <div id="get-AI-insights-loader" class="loader"></div>
         <div id="create-work-item-results" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;font-weight: 400;font-size: medium;"></div>

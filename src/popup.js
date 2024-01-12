@@ -16,6 +16,10 @@ let insightsContent = document.getElementById('ai-insights-results')
 let createWorkItemContent = document.getElementById('create-work-item-results')
 let ado_create_work_item = document.getElementById('create-ado-work-item')
 let create_work_item_loader = document.getElementById('create-work-item-loader')
+let select_work_item_area_dropdown=document.getElementById("select-work-item-area-dropdown")
+let select_work_item_iteration_dropdown = document.getElementById(
+  'select-work-item-area-dropdown'
+)
 let llamaOutput = ''
 
 let flyoutMenuItems;
@@ -88,22 +92,36 @@ function inputQueryOnChangeHandler() {
 }
 
 ado_create_work_item.onclick = async function () {
+  const selectedAreaPathOption = areaDropdown.options[areaDropdown.selectedIndex]
+  const adoProjectName =
+    document.getElementById('projectName').value || 'OneCRM';
+  const selectedChildAreaPath = selectedAreaPathOption.dataset.areaPath
+  const selectedAreaPath = adoProjectName + "\\" + selectedChildAreaPath
+  const selectedIterationPathOption = iterationDropdown.options[iterationDropdown.selectedIndex]
+  const selectedChildIterationPath =
+    selectedIterationPathOption.dataset.areaPath
+  const selectedIterationPath =
+    adoProjectName + '\\' + selectedChildIterationPath
   insightsContent.style.display='none'
   createWorkItemContent.style.display='block'
-  createWorkItemContent.textContent="Creating work items..."
   
-  showLoader('create-work-item-loader')
   try {
     const cookies = await chrome.cookies.getAll({
       url: 'https://dev.azure.com',
     })
     if (cookies && cookies.length > 0) {
+      createWorkItemContent.textContent = 'Creating work items...'
+
+      showLoader('create-work-item-loader')
       const cookieString = cookies
         .map((cookie) => `${cookie.name}=${cookie.value}`)
         .join('; ')
       const createdWorkItems = await createParentUserStoryAndChildTask(
-        adoBaseUrl,cookieString,
-        JSON.parse(llamaOutput)
+        adoBaseUrl,
+        cookieString,
+        JSON.parse(llamaOutput),
+        selectedAreaPath,
+        selectedIterationPath
       )
       await showCreatedWorkItems(adoBaseUrl,createdWorkItems)
       hideLoader('create-work-item-loader')
@@ -138,17 +156,108 @@ aiInsightsButton.onclick = function () {
       document.getElementById('popup-body-id').style.width = '600px'
       llamaOutput?insightsContent.innerHTML = generateInsightsHTML(
         JSON.parse(llama2OutputString)
-      ):null
+      ):insightsContent.textContent = "No insights found !"
     } else insightsContent.textContent = llama2OutputString
     hideLoader('get-AI-insights-loader') // Hide loader when insights are loaded
     ado_create_work_item.disabled = intent !== 'specReview'
+    fetchAreaAndPopulateDropdown()
+    fetchIterationAndPopulateDropdown()
+    select_work_item_area_dropdown.style.display=intent=='specReview'?'flex':'none';
+    select_work_item_iteration_dropdown.style.display=intent=='specReview'?'flex':'none'
   })
 }
 
+function fetchIterationAndPopulateDropdown() {
+  const adoOrganizationName = span_company.value || 'dynamicscrm'
+  const adoOrganizationUrl = `https://dev.azure.com/${adoOrganizationName}`
+  const adoProjectName =
+    document.getElementById('projectName').value || 'OneCRM'
+
+  const iterationDropdown = document.getElementById('iterationDropdown')
+
+  // Fetch Areas from Azure DevOps
+  fetch(
+    `${adoOrganizationUrl}/${adoProjectName}/_apis/wit/classificationNodes/Iterations`
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      return fetchAndPopulateDropdown(
+        data._links.self.href + '?$depth=1&api-version=6.0',
+        iterationDropdown
+      )
+    })
+    .catch((error) => console.error('Error fetching Areas or Children:', error))
+
+  // Helper function to fetch and populate dropdown options
+  function fetchAndPopulateDropdown(url, dropdown) {
+    return fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        populateDropdown(dropdown, data.children)
+      })
+  }
+
+}
+function fetchAreaAndPopulateDropdown()
+{
+   const adoOrganizationName =
+     span_company.value || 'dynamicscrm'
+   const adoOrganizationUrl = `https://dev.azure.com/${adoOrganizationName}`
+   const adoProjectName =
+     document.getElementById('projectName').value || 'OneCRM'
+
+   const areaDropdown = document.getElementById('areaDropdown')
+
+   // Fetch Areas from Azure DevOps
+   fetch(
+     `${adoOrganizationUrl}/${adoProjectName}/_apis/wit/classificationNodes/Areas`
+   )
+     .then((response) => response.json())
+     .then((data) => {
+       return fetchAndPopulateDropdown(
+         data._links.self.href + '?$depth=1&api-version=6.0',
+         areaDropdown
+       )
+     })
+     .catch((error) =>
+       console.error('Error fetching Areas or Children:', error)
+     )
+
+   // Helper function to fetch and populate dropdown options
+   function fetchAndPopulateDropdown(url, dropdown) {
+     return fetch(url)
+       .then((response) => response.json())
+       .then((data) => {
+         populateDropdown(dropdown, data.children)
+       })
+   }
+}
+
+// Helper function to populate dropdown options
+   function populateDropdown(dropdown, options) {
+     // Clear existing options
+     dropdown.innerHTML = ''
+
+     // Add default option
+     const defaultOption = document.createElement('option')
+     defaultOption.value = ''
+     defaultOption.textContent = 'Select...'
+     dropdown.appendChild(defaultOption)
+
+     // Add options from the data
+     options.forEach((option) => {
+       const newOption = document.createElement('option')
+       newOption.value = option.url
+       newOption.textContent = option.path 
+       newOption.dataset.areaPath = option.name
+       dropdown.appendChild(newOption)
+     })
+   }
 
 
 document.addEventListener("DOMContentLoaded", function () {
   setGlobalVariablesFromConfig();
+  
   chrome.tabs.query({ active: true, currentWindow: true }).then((resp) => {
     const [tab] = resp;
     try {
@@ -279,6 +388,9 @@ function getPromptFromIntent(intent) {
 //#endregion
 
 function setGlobalVariablesFromConfig() {
+  select_work_item_area_dropdown.style.display="none"
+  select_work_item_iteration_dropdown.style.display='none'
+  ado_create_work_item.disabled="true"
   chrome.storage.sync
     .get({ adoSettings: {}, kustoSettings: {}, newTab: true })
     .then((items) => {
