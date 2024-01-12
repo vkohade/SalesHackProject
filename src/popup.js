@@ -16,6 +16,7 @@ let insightsContent = document.getElementById('ai-insights-results')
 let createWorkItemContent = document.getElementById('create-work-item-results')
 let ado_create_work_item = document.getElementById('create-ado-work-item')
 let create_work_item_loader = document.getElementById('create-work-item-loader')
+let engMs_search = document.getElementById('search-in-engms')
 let llamaOutput = ''
 
 let flyoutMenuItems;
@@ -47,6 +48,11 @@ unify_search.onclick = function () {
   createNewTab(`${unifyBaseUrl}/${search}`);
 };
 
+engMs_search.onclick = function () {
+  let search = input_query.value;
+  createNewTab(`https://eng.ms/search?q=${search}&filter=%5B%7B%22name%22:%22ancestorMetadataIds%22,%22operator%22:%22CONTAINS%22,%22value%22:%5B%22ad8b876f-9485-443b-9afd-181bd928ec99%22%5D%7D%5D`);
+}
+
 input_query.oninput = inputQueryOnChangeHandler;
 
 function inputQueryOnChangeHandler() {
@@ -60,6 +66,7 @@ function inputQueryOnChangeHandler() {
     createWorkItemContent.style.display='none'
     ado_create_work_item.style.display = 'none'
     createWorkItemContent.style.display='none'
+    engMs_search.style.display='none'
   } else {
     ado_search.disabled = false
 
@@ -69,7 +76,7 @@ function inputQueryOnChangeHandler() {
       aiInsightsButton.style.display = 'none'
       ado_create_work_item.style.display = 'none'
       insightsContent.style.display = 'none'
-      createWorkItemContent.style.display='none'
+      engMs_search.style.display = 'none'
       for (const [key, value] of Object.entries(configJson)) {
         configJson[key] = replacer(value, {
           Guid: `"${input_query.value}"`,
@@ -83,6 +90,7 @@ function inputQueryOnChangeHandler() {
       insightsContent.style.display = 'none'
       createWorkItemContent.style.display='none'
       ado_create_work_item.style.display = 'block'
+      engMs_search.style.display = 'block'
     }
   }
 }
