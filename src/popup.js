@@ -76,6 +76,7 @@ function inputQueryOnChangeHandler() {
       aiInsightsButton.style.display = 'none'
       ado_create_work_item.style.display = 'none'
       insightsContent.style.display = 'none'
+      createWorkItemContent.style.display='none'
       engMs_search.style.display = 'none'
       for (const [key, value] of Object.entries(configJson)) {
         configJson[key] = replacer(value, {
