@@ -1,21 +1,21 @@
 body {
-    width: 300px;
+    width: 500px;
+    color: #ccd;
 }
 
 .content {
-    padding: 10px;
-}
-
-h2 {
-    margin-bottom: 10px;
+    padding: 2em;
+    justify-content: center;
+    align-items: center;
+    background-color: #21202aed;
+    background-position: 50% 50%;
+    background-size: 100vw auto, 100% 100%;
+    background-size: max(100vw, 30em) auto, 100% 100%;
 }
 
 .pure-g {
-    margin-bottom: 7px;
-}
-
-.muted {
-    color: #666;
+    align-self: center;
+    font-size: small;
 }
 
 .bold {
@@ -24,6 +24,29 @@ h2 {
 
 .full-width {
     width: 100%;
+}
+
+.action-container {
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pure-button-new {
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    padding: 10px;
+    background: inherit;
+    border: 3px solid #fff;
+    border-radius: 0.75em;
+    width: 100%;
+    align-self: cent
+}
+
+.pure-button-new:hover {
+    background-color: white;
+    color: #21202aed;
 }
 
 .dropdown {
@@ -41,26 +64,27 @@ h2 {
     border: none;
 }
 
+.dropdown-items {
+    padding: 5px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.dropdown-items:hover {
+    background-color: white;
+    color: #21202aed;
+}
+
 .dropdown-content {
     display: none;
-    position: absolute;
-    background-color: #f1f1f1;
-    min-width: 100px;
-    box-shadow: 2px 10px 10px 2px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-    width: 100%;
-}
-
-.dropdown-content a {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-    width: 100%;
-}
-
-.dropdown-content a:hover {
-    background-color: #ddd;
+    flex-direction: column;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    background: inherit;
+    border: 3px solid #fff;
+    border-radius:0 0 0.75em 0.75em;
+    border-top: 0px;
 }
 
 .dropdown:hover .dropdown-content {
@@ -71,6 +95,56 @@ h2 {
     background-color: #e0e7e0;
 }
 
+.ai-insights-results {
+    margin-top: 10px;
+    white-space: pre-line;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 400;
+    font-size: medium;
+}
+
+.HeaderStyle{
+    display: flex;
+    gap: 10px;
+    font-weight: bold;
+    justify-content: space-between;
+    color: #ccd;
+    color: rgb(245 237 245 / 60%)
+}
+
+.HeaderSettingStyle {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.HeaderNameStyle {
+    font-size: large;
+    padding: 0 0.5em;
+    margin-bottom: 0.5em;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #ccd;
+    color: rgb(245 237 245 / 60%);
+    cursor: pointer;
+}
+
+.new-tab-checkbox-container{
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    cursor: pointer;
+    flex-wrap: nowrap;
+}
+
+.new-tab-setting-name {
+    align-self: center;
+}
+
+.setting-gear-icon{
+    cursor: pointer;
+}
+
 #settings {
     text-decoration: none;
     color: inherit;
@@ -78,45 +152,6 @@ h2 {
 
 #search {
     margin-bottom: 10px;
-}
-
-#newTab {
-    margin-left: 5px;
-}
-
-#ai-insights-results {
-    margin-top: 10px;
-}
-
-#create-ado-work-item{
-    margin-top: 10px;
-}
-
-.HeaderStyle{
-    display: flex;
-    gap: 10px;
-    color: black;
-    font-weight: bold;
-    font-size: large;
-}
-
-.new-tab-checkbox-container{
-    cursor: pointer;
-}
-
-.setting-gear-icon{
-    cursor: pointer;
-}
-
-.loader {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-  margin: 10px auto;
-  display: none; /* initially hide the loader */
 }
 
 @keyframes spin {
@@ -138,3 +173,166 @@ th, td {
     padding: 8px;
     text-align: left;
 }
+
+
+/* Loader*/
+.loader-container {
+    display: flex;
+    justify-content: center;
+}
+
+.pencil-loader {
+    align-content: center;
+    margin: 5%;
+    display: flex;
+    justify-content: center;
+    display: none;
+  }
+  
+  .pencil {
+    display: block;
+    width: 5em;
+    height: 5em;
+  }
+  
+  .pencil__body1,
+  .pencil__body2,
+  .pencil__body3,
+  .pencil__eraser,
+  .pencil__eraser-skew,
+  .pencil__point,
+  .pencil__rotate,
+  .pencil__stroke {
+    animation-duration: 3s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  
+  .pencil__body1,
+  .pencil__body2,
+  .pencil__body3 {
+    transform: rotate(-90deg);
+  }
+  
+  .pencil__body1 {
+    animation-name: pencilBody1;
+  }
+  
+  .pencil__body2 {
+    animation-name: pencilBody2;
+  }
+  
+  .pencil__body3 {
+    animation-name: pencilBody3;
+  }
+  
+  .pencil__eraser {
+    animation-name: pencilEraser;
+    transform: rotate(-90deg) translate(49px, 0);
+  }
+  
+  .pencil__eraser-skew {
+    animation-name: pencilEraserSkew;
+    animation-timing-function: ease-in-out;
+  }
+  
+  .pencil__point {
+    animation-name: pencilPoint;
+    transform: rotate(-90deg) translate(49px, -30px);
+  }
+  
+  .pencil__rotate {
+    animation-name: pencilRotate;
+  }
+  
+  .pencil__stroke {
+    animation-name: pencilStroke;
+    transform: translate(100px, 100px) rotate(-113deg);
+  }
+  
+  /* Animations */
+  @keyframes pencilBody1 {
+    from, to {
+      stroke-dashoffset: 351.86;
+      transform: rotate(-90deg);
+    }
+    50% {
+      stroke-dashoffset: 150.8; /* 3/8 of diameter */
+      transform: rotate(-225deg);
+    }
+  }
+  @keyframes pencilBody2 {
+    from, to {
+      stroke-dashoffset: 406.84;
+      transform: rotate(-90deg);
+    }
+    50% {
+      stroke-dashoffset: 174.36;
+      transform: rotate(-225deg);
+    }
+  }
+  @keyframes pencilBody3 {
+    from, to {
+      stroke-dashoffset: 296.88;
+      transform: rotate(-90deg);
+    }
+    50% {
+      stroke-dashoffset: 127.23;
+      transform: rotate(-225deg);
+    }
+  }
+  @keyframes pencilEraser {
+    from, to {
+      transform: rotate(-45deg) translate(49px, 0);
+    }
+    50% {
+      transform: rotate(0deg) translate(49px, 0);
+    }
+  }
+  @keyframes pencilEraserSkew {
+    from, 32.5%, 67.5%, to {
+      transform: skewX(0);
+    }
+    35%, 65% {
+      transform: skewX(-4deg);
+    }
+    37.5%, 62.5% {
+      transform: skewX(8deg);
+    }
+    40%, 45%, 50%, 55%, 60% {
+      transform: skewX(-15deg);
+    }
+    42.5%, 47.5%, 52.5%, 57.5% {
+      transform: skewX(15deg);
+    }
+  }
+  @keyframes pencilPoint {
+    from, to {
+      transform: rotate(-90deg) translate(49px, -30px);
+    }
+    50% {
+      transform: rotate(-225deg) translate(49px, -30px);
+    }
+  }
+  @keyframes pencilRotate {
+    from {
+      transform: translate(100px, 100px) rotate(0);
+    }
+    to {
+      transform: translate(100px, 100px) rotate(720deg);
+    }
+  }
+  @keyframes pencilStroke {
+    from {
+      stroke-dashoffset: 439.82;
+      transform: translate(100px, 100px) rotate(-113deg);
+    }
+    50% {
+      stroke-dashoffset: 164.93;
+      transform: translate(100px, 100px) rotate(-113deg);
+    }
+    75%, to {
+      stroke-dashoffset: 439.82;
+      transform: translate(100px, 100px) rotate(112deg);
+    }
+  }

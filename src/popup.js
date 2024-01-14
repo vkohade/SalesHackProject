@@ -6,11 +6,12 @@ let span_company = document.getElementById('company')
 let span_projectName = document.getElementById('projectName')
 let ado_search = document.getElementById('search-in-ado')
 let unify_search = document.getElementById('search-in-unify')
-let kusto_search = document.getElementById('dropdown')
+let kusto_search_container = document.getElementById('dropdown')
+let kusto_search_button = document.getElementById('search-in-kusto')
 let form_newTab = document.getElementById('newTab')
 let button_settings = document.getElementById('settings')
 let input_query = document.getElementById('query')
-let flyoutMenu = document.getElementsByClassName('dropdown-content')
+let flyoutMenu = document.getElementById('dropdown-content')
 let aiInsightsButton = document.getElementById('get-ai-insights')
 let insightsContent = document.getElementById('ai-insights-results')
 let createWorkItemContent = document.getElementById('create-work-item-results')
@@ -29,6 +30,7 @@ let kustoBaseUrl;
 let unifyBaseUrl = "https://unify.services.dynamics.com/CRM/Org";
 let configJson = {};
 let tabUrl = "";
+let aiInsightsResult = "";
 
 //#region Event Handlers
 button_settings.onclick = function () {
@@ -48,6 +50,11 @@ unify_search.onclick = function () {
   createNewTab(`${unifyBaseUrl}/${search}`);
 };
 
+kusto_search_button.onclick = function () {
+  flyoutMenu.style.display = "flex";
+  kusto_search_button.style.borderRadius = "0.75em 0.75em 0 0";
+}
+
 engMs_search.onclick = function () {
   let search = input_query.value;
   createNewTab(`https://eng.ms/search?q=${search}&filter=%5B%7B%22name%22:%22ancestorMetadataIds%22,%22operator%22:%22CONTAINS%22,%22value%22:%5B%22ad8b876f-9485-443b-9afd-181bd928ec99%22%5D%7D%5D`);
@@ -60,7 +67,7 @@ function inputQueryOnChangeHandler() {
     ado_search.disabled = true
     ado_create_work_item.disabled = true
     unify_search.style.display = 'none'
-    kusto_search.style.display = 'none'
+    kusto_search_container.style.display = 'none'
     aiInsightsButton.style.display = 'none'
     insightsContent.style.display = 'none'
     createWorkItemContent.style.display='none'
@@ -72,7 +79,7 @@ function inputQueryOnChangeHandler() {
 
     if (isInputTextGuid(input_query.value)) {
       unify_search.style.display = 'block'
-      kusto_search.style.display = 'block'
+      kusto_search_container.style.display = 'block'
       aiInsightsButton.style.display = 'none'
       ado_create_work_item.style.display = 'none'
       insightsContent.style.display = 'none'
@@ -86,7 +93,7 @@ function inputQueryOnChangeHandler() {
       kustoBaseUrl = `${kusto_prefix}` //${configData}${kusto_suffix}
     } else {
       unify_search.style.display = 'none'
-      kusto_search.style.display = 'none'
+      kusto_search_container.style.display = 'none'
       aiInsightsButton.style.display = 'block'
       insightsContent.style.display = 'none'
       createWorkItemContent.style.display='none'
@@ -138,7 +145,6 @@ aiInsightsButton.onclick = function () {
   ado_create_work_item.disabled=true
   create_work_item_loader.style.display='none'
   insightsContent.style.display = 'block'
-  insightsContent.textContent = 'Loading insights...'
   showLoader('get-AI-insights-loader') // Show loader while fetching insights
   askLlama2(promptDictionary, input_query.value).then((llama2OutputString) => {
     llamaOutput = llama2OutputString
@@ -278,7 +284,7 @@ function getPromptFromIntent(intent) {
         systemPrompt:
           "You are an AI code and code error assistant that explains code and error messages and exceptions.",
         userPrePrompt:
-          "Help me understand this text which is either an error or a code snippet. Auto detect the category and explain the details of this text. Be concise and straightforward in your answer.",
+          "Help me understand this text which is either an error or a code snippet. Auto detect the category and explain the details of this text.explain the error message and provide ways to resolve it. Be concise and straightforward in your answer.",
       };
     default:
       return {};
@@ -320,7 +326,7 @@ function setGlobalVariablesFromConfig() {
           link.className = "dropdown-items";
           link.id = key;
           link.innerHTML = key;
-          flyoutMenu[0].appendChild(link);
+          flyoutMenu.appendChild(link);
         }
 
         flyoutMenuItems = document.getElementsByClassName("dropdown-items");
