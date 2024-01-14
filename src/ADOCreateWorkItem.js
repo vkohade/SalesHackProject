@@ -128,10 +128,13 @@ export async function createParentUserStoryAndChildTask(
           type: 'task',
         })
 
-        return createdWorkItems
+       
       }
+      
     }
+    
   }
+  return createdWorkItems
 }
 
 async function updateAssignedTo(adoBaseUrl, cookieString, workItemId) {

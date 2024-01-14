@@ -31,51 +31,50 @@
             </div>
             <div class="pure-u-1-1">
                 <div class="pure-u-4-5 muted">
-                    <div class="">Search within:
+                    <div>Search within:
                         <span class="bold" id="company"></span>,
                         <span class="bold" id="projectName"></span>
                     </div>
                 </div>
-                <button id="search-in-ado" class="pure-button full-width" type="submit" title="Search in Azure DevOps">
-                    <i class="fa fa-search" style="padding-right: 3px;"></i> Search in ADO
-                </button>
-                <button id="search-in-unify" class="pure-button full-width" type="submit" title="Search in Unify">
-                    <i class="fa fa-search" style="padding-right: 3px;"></i> Search in Unify
-                </button>
-                <button id="search-in-engms" class="pure-button full-width" type="submit" title="Search in Eng.ms">
-                    <i class="fa fa-search" style="padding-right: 3px;"></i> Search in Eng.ms
-                </button>
-                <div class="dropdown" id="dropdown" style="padding-top: 10px;" title="Search in Kusto">
-                    <button class="dropbtn"><i class="fa fa-search" style="padding-right: 3px;"></i> Search in Kusto</button>
-                    <div class="dropdown-content"></div>
-                </div>
             </div>
         </form>
-        <button id="get-ai-insights" class="pure-button full-width" type="submit" title="Get AI Insights">
+        
+        <button id="search-in-ado" class="pure-button full-width" type="submit" title="Search in Azure DevOps" style="margin-top: 10px;">
+            <i class="fa fa-search" style="padding-right: 3px;"></i> Search in ADO
+        </button>        
+        <button id="search-in-unify" class="pure-button full-width" type="submit" title="Search in Unify" style="margin-top: 10px;">
+            <i class="fa fa-search" style="padding-right: 3px;"></i> Search in Unify
+        </button>  
+        <div class="dropdown" id="dropdown" style="padding-top: 10px;" title="Search in Kusto">
+                    <button class="dropbtn" id="search_in_kusto"><i class="fa fa-search" style="padding-right: 3px;"></i> Search in Kusto</button>
+                    <div class="dropdown-content"></div>
+                </div>
+           
+        
+        <button id="search-in-engms" class="pure-button full-width" type="submit" title="Search in Eng.ms" style="margin-top: 10px;">
+            <i class="fa fa-search" style="padding-right: 3px;"></i> Search in Eng.ms
+        </button>              
+        <button id="get-ai-insights" class="pure-button full-width" type="submit" title="Get AI Insights" style="margin-top: 10px;">
             <i class="fas fa-lightbulb" style="padding-right: 5px;"></i> Get AI insights
         </button>
-        <button id="create-ado-work-item" class="pure-button full-width"  title="Create Work Item in Azure DevOps">
+        <button id="create-ado-work-item" class="pure-button full-width" type="submit" title="Create Work Item in Azure DevOps" style="margin-top: 10px;">
             <i class="fa fa-plus" style="padding-right: 3px;" ></i> Create Work Item
         </button>
-        
-        <div id="select-work-item-area-dropdown" class="option" style="display: flex;gap: 10px;width: 100%;">
+        <div id="select-work-item-area-dropdown" class="option" style="display: flex;gap: 10px;width: 100%;margin-top: 10px;">
             <label for="areaDropdown" title="Select area">Area:</label>
             <select id="areaDropdown" style="flex-grow: 1;">
                 <!-- Area options will be dynamically populated here -->
             </select>
         </div>
-
-        <div class="select-work-item-iteration-dropdown" style="display: flex; gap: 10px; width: 100%;">
+        <div id="select-work-item-iteration-dropdown" style="display: flex; gap: 10px; width: 100%;margin-top: 10px;">
             <label for="iterationDropdown" title="Select iteration path">Iteration:</label>
             <select id="iterationDropdown" style="flex-grow: 1;">
                 <!-- Iteration options will be dynamically populated here -->
             </select>
-        </div>
-
-        
-        <div id="ai-insights-results" style="white-space: pre-line;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;font-weight: 400;font-size: medium;"></div>
+        </div>        
+        <div id="ai-insights-results" style="white-space: pre-line;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;font-weight: 400;font-size: medium;margin-top: 5px;"></div>
         <div id="get-AI-insights-loader" class="loader"></div>
-        <div id="create-work-item-results" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;font-weight: 400;font-size: medium;"></div>
+        <div id="create-work-item-results" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;font-weight: 400;font-size: medium;margin-top:5px;"></div>
         <div id="create-work-item-loader" class="loader"></div>
     </div>
     <script src="popup.js"></script>
