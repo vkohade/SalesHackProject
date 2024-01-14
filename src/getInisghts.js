@@ -49,7 +49,7 @@ export function getPromptFromIntent(intent) {
         systemPrompt:
           'You are an AI code and code error assistant that explains code and error messages and exceptions.',
         userPrePrompt:
-          'Help me understand this text which is either an error or a code snippet. Auto detect the category and explain the details of this text. Be concise and straightforward in your answer.',
+          'Help me understand this text which is either an error or a code snippet.explain the error message and provide ways to resolve it.Auto detect the category and explain the details of this text. Be concise and straightforward in your answer.',
       }
     default:
       return {}

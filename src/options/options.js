@@ -1,4 +1,5 @@
 import "./options.css";
+import { kustoData } from './../kustoData';
 
 document.addEventListener("DOMContentLoaded", function () {
   // Load saved options
@@ -11,8 +12,8 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("projectName").value =
         result.adoSettings.project || "OneCRM";
 
-      document.getElementById("configJson").value =
-        result.kustoSettings.configJson || "";
+      document.getElementById('configJson').value =
+        result.kustoSettings.configJson ||  JSON.stringify(kustoData)
     }
   );
 

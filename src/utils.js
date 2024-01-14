@@ -13,7 +13,7 @@ export function generateInsightsHTML(data) {
     html += '<tr>'
     html += `<td><strong>${item.title_of_item}</strong></td>`
     html += `<td>${item.description_of_item}</td>`
-    html += `<td>${item.type_of_item}</td>`
+    html += `<td>${getWorkItemType(item.type_of_item)}</td>`
     html += '</tr>'
   })
 
@@ -22,9 +22,19 @@ export function generateInsightsHTML(data) {
   return html
 }
 
+export function getWorkItemType(typename) {
+  const typenameToLowercase = typename?.toLowerCase();
+  if (typenameToLowercase.includes("story")) {
+    return "User Story";
+  } else if (typenameToLowercase.includes("task")) {
+    return "Task";
+  }
+  return typename;
+}
+
 // Function to show the loader
 export function showLoader(id) {
-  document.getElementById(id).style.display = 'block'
+  document.getElementById(id).style.display = 'flex'
 }
 
 // Function to hide the loader
