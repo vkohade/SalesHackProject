@@ -13,7 +13,7 @@ export function generateInsightsHTML(data) {
     html += '<tr>'
     html += `<td><strong>${item.title_of_item}</strong></td>`
     html += `<td>${item.description_of_item}</td>`
-    html += `<td>${item.type_of_item}</td>`
+    html += `<td>${getWorkItemType(item.type_of_item)}</td>`
     html += '</tr>'
   })
 
@@ -22,9 +22,19 @@ export function generateInsightsHTML(data) {
   return html
 }
 
+export function getWorkItemType(typename) {
+  const typenameToLowercase = typename?.toLowerCase();
+  if (typenameToLowercase.includes("story")) {
+    return "User Story";
+  } else if (typenameToLowercase.includes("task")) {
+    return "Task";
+  }
+  return typename;
+}
+
 // Function to show the loader
 export function showLoader(id) {
-  document.getElementById(id).style.display = 'block'
+  document.getElementById(id).style.display = 'flex'
 }
 
 // Function to hide the loader
@@ -38,7 +48,7 @@ export async function showCreatedWorkItems(adoBaseUrl, createdWorkItems) {
   container.innerHTML = ''
 
    let message = document.createElement('p')
-   message.textContent = 'Below are your created work items :-'
+   message.textContent = 'Here are your created work items :-'
    container.appendChild(message)
 
   let list = document.createElement('ul')
@@ -56,3 +66,23 @@ export async function showCreatedWorkItems(adoBaseUrl, createdWorkItems) {
    list.style.marginTop = '12px'
    container.appendChild(list)
 }
+
+export function isInputTextGuid(userSelection) {
+  // Remove whitespaces from the selection first
+  userSelection = userSelection.replace(/\s/g, '')
+
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    userSelection
+  )
+}
+
+export var replacer = function (tpl, data) {
+  var re = /\$\(([^\)]+)?\)/g,
+    match
+  while ((match = re.exec(tpl))) {
+    tpl = tpl.replace(match[0], data[match[1]])
+    re.lastIndex = 0
+  }
+  return tpl
+}
+

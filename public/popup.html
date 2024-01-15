@@ -11,56 +11,160 @@
 </head>
 <body id="popup-body-id">
     <div class="content">
-        <div class="HeaderStyle" class="bold"><div>FTEBuddy</div>
-        <div class="pure-g" style="padding-bottom: 7px;">
-            <div class="pure-u-1-5 muted" style="text-align: right;">
-                <a class="setting-gear-icon" id="settings" title="Settings">
-                    <i class="fa fa-cogs"></i>
-                </a>
+        <div class="HeaderStyle" class="bold">
+            <h2 class="HeaderNameStyle" id="FTEBuddy" title="FTEBuddy">FTEBuddy</h2>
+            <div class="HeaderSettingStyle">
+                <div class="pure-g">
+                    <div class="pure-u-1-5" style="text-align: right;">
+                        <a class="setting-gear-icon" id="settings" title="Settings">
+                            <i class="fa fa-cogs"></i>
+                        </a>
+                    </div>
+                </div>
+                <div  class="new-tab-checkbox-container" title="Open in new tab">
+                    <span class="new-tab-setting-name">New tab</span>
+                    <input type="checkbox" id="newTab" style="cursor: pointer; margin-left: 5px;"/>
+                </div>
             </div>
-        </div></div>
+        </div>
           
 
-        <form id="search" class="pure-form pure-g">
-            <div class="pure-u-4-5">
-                <input class="full-width" id="query" type="text" placeholder="Please select or type some text" autofocus="">
-            </div>
-            <div  class="pure-u-1-5 muted" class="new-tab-checkbox-container" style="text-align: center; display: flex;flex-direction: column;gap: 5px;cursor: pointer;" title="Open in new tab">
-                New tab
-                <input type="checkbox" id="newTab" style="cursor: pointer;"/>
+        <form id="search" class="pure-form" style="padding-left: 5px;">
+            <div class="">
+                <input class="full-width search-query" id="query" type="text" placeholder="Please select or type some text" autofocus="" style="
+                color: #ccd;
+                font-size: 0.95rem;
+                line-height: 1;
+                border-style: none;
+                outline: none;
+                height: 3.1em;
+                width: 100%;
+                padding: 0.8em 1em;
+                border: 0.25em solid transparent;
+                background-image: linear-gradient(#000, #000), linear-gradient(120deg, #f09 0%, #0ff 50%, #9f0 100%);
+                background-origin: border-box;
+                background-clip: padding-box, border-box;
+                border-radius: 1.8em;
+                background-size: 200% 100%;
+                transition: background-position 0.8s ease-out;">
             </div>
             <div class="pure-u-1-1">
-                <div class="pure-u-4-5 muted">
-                    <div class="">Search within:
+                <div class="pure-u-4-5">
+                    <div style="padding: 10px 20px;">
+                        <span>Search within:</span>
                         <span class="bold" id="company"></span>,
                         <span class="bold" id="projectName"></span>
                     </div>
                 </div>
-                <button id="search-in-ado" class="pure-button full-width" type="submit" title="Search in Azure DevOps">
-                    <i class="fa fa-search" style="padding-right: 3px;"></i> Search in ADO
-                </button>
-                <button id="search-in-unify" class="pure-button full-width" type="submit" title="Search in Unify">
-                    <i class="fa fa-search" style="padding-right: 3px;"></i> Search in Unify
-                </button>
-                <button id="search-in-engms" class="pure-button full-width" type="submit" title="Search in Eng.ms">
-                    <i class="fa fa-search" style="padding-right: 3px;"></i> Search in Eng.ms
-                </button>
-                <div class="dropdown" id="dropdown" style="padding-top: 10px;" title="Search in Kusto">
-                    <button class="dropbtn"><i class="fa fa-search" style="padding-right: 3px;"></i> Search in Kusto</button>
-                    <div class="dropdown-content"></div>
-                </div>
             </div>
         </form>
-        <button id="get-ai-insights" class="pure-button full-width" type="submit" title="Get AI Insights">
-            <i class="fas fa-lightbulb" style="padding-right: 5px;"></i> Get AI insights
-        </button>
-        <button id="create-ado-work-item" class="pure-button full-width"  title="Create Work Item in Azure DevOps">
-            <i class="fa fa-plus" style="padding-right: 3px;" ></i> Create Work Item
-        </button>
-        <div id="ai-insights-results" style="white-space: pre-line;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;font-weight: 400;font-size: medium;"></div>
-        <div id="get-AI-insights-loader" class="loader"></div>
+        <div class="action-container">
+            <button id="search-in-ado" class="pure-button-new full-width" type="submit" title="Search in Azure DevOps">
+                <i class="fa fa-search" style="padding-right: 3px;"></i> Search in ADO
+            </button>
+            
+            <button id="search-in-unify" class="pure-button-new full-width" type="submit" title="Search in Unify">
+                <i class="fa fa-search" style="padding-right: 3px;"></i> Search in Unify
+            </button>
+            <div id="dropdown" title="Search in Kusto">
+                <button class="pure-button-new full-width" id="search-in-kusto">
+                    <i class="fa fa-search" style="padding-right: 3px;"></i>
+                    Search in Kusto
+                </button>
+                <div class="dropdown-content" id="dropdown-content" style=""></div>
+            </div>
+            <button id="search-in-engms" class="pure-button-new full-width" type="submit" title="Search in Eng.ms">
+                <i class="fa fa-search" style="padding-right: 3px;"></i> Search in Eng.ms
+            </button>
+            <button id="get-ai-insights" class="pure-button-new full-width" type="submit" title="Get AI Insights">
+                <i class="fas fa-lightbulb" style="padding-right: 5px;"></i> Get AI insights
+            </button>
+            <button id="create-ado-work-item" class="pure-button-new full-width"  title="Create Work Item in Azure DevOps">
+                <i class="fa fa-plus" style="padding-right: 3px;" ></i> Create Work Item
+            </button>
+        </div>
+         <div id="select-work-item-area-dropdown" class="option" style="display: flex;gap: 10px;width: 100%;margin-top: 10px;">
+            <select id="areaDropdown" class="pure-button-new full-width" style="flex-grow: 1;">
+                <!-- Area options will be dynamically populated here -->
+            </select>
+        </div>
+        <div id="select-work-item-iteration-dropdown" style="display: flex; gap: 10px; width: 100%;margin-top: 10px;">
+            <select id="iterationDropdown" class="pure-button-new full-width" style="flex-grow: 1;">
+                <!-- Iteration options will be dynamically populated here -->
+            </select>
+        </div> 
+        <div class="ai-insights-results" id="ai-insights-results"></div>
+        <div class="loader-container">
+            <div id="get-AI-insights-loader" class="pencil-loader">
+                <svg class="pencil" viewBox="0 0 200 200" width="200px" height="200px" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <clipPath id="pencil-eraser">
+                            <rect rx="5" ry="5" width="30" height="30"></rect>
+                        </clipPath>
+                    </defs>
+                    <circle class="pencil__stroke" r="70" fill="none" stroke="hsl(0, 0%, 100%)" stroke-width="2" stroke-dasharray="439.82 439.82" stroke-dashoffset="439.82" stroke-linecap="round" transform="rotate(-113,100,100)" />
+                    <g class="pencil__rotate" transform="translate(100,100)">
+                        <g fill="none">
+                            <circle class="pencil__body1" r="64" stroke="hsl(309, 47%, 63%)" stroke-width="30" stroke-dasharray="402.12 402.12" stroke-dashoffset="402" transform="rotate(-90)" />
+                            <circle class="pencil__body2" r="74" stroke="	hsl(246, 37%, 74%)" stroke-width="10" stroke-dasharray="464.96 464.96" stroke-dashoffset="465" transform="rotate(-90)" />
+                            <circle class="pencil__body3" r="54" stroke="hsl(297,37%,65%)" stroke-width="10" stroke-dasharray="339.29 339.29" stroke-dashoffset="339" transform="rotate(-90)" />
+                        </g>
+                        <g class="pencil__eraser" transform="rotate(-90) translate(49,0)">
+                            <g class="pencil__eraser-skew">
+                                <rect fill="hsl(246,37%,74%)" rx="5" ry="5" width="30" height="30" />
+                                <rect fill="hsl(297,37%,65%)" width="5" height="30" clip-path="url(#pencil-eraser)" />
+                                <rect fill="hsl(223,10%,90%)" width="30" height="20" />
+                                <rect fill="hsl(223,10%,70%)" width="15" height="20" />
+                                <rect fill="hsl(223,10%,80%)" width="5" height="20" />
+                                <rect fill="hsla(223,10%,10%,0.2)" y="6" width="30" height="2" />
+                                <rect fill="hsla(223,10%,10%,0.2)" y="13" width="30" height="2" />
+                            </g>
+                        </g>
+                        <g class="pencil__point" transform="rotate(-90) translate(49,-30)">
+                            <polygon fill="hsl(0, 0%, 100%)" points="15 0,30 30,0 30" />
+                            <polygon fill="hsl(0, 0%, 70%)" points="15 0,6 30,0 30" />
+                            <polygon fill="hsl(10, 0%, 80%)" points="15 0,20 10,10 10" />
+                        </g>
+                    </g>
+                </svg>
+              </div>
+        </div>
         <div id="create-work-item-results" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;font-weight: 400;font-size: medium;"></div>
-        <div id="create-work-item-loader" class="loader"></div>
+        <div class="loader-container">
+            <div id="create-work-item-loader" class="pencil-loader">
+                <svg class="pencil" viewBox="0 0 200 200" width="200px" height="200px" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <clipPath id="pencil-eraser">
+                            <rect rx="5" ry="5" width="30" height="30"></rect>
+                        </clipPath>
+                    </defs>
+                    <circle class="pencil__stroke" r="70" fill="none" stroke="hsl(0, 0%, 100%)" stroke-width="2" stroke-dasharray="439.82 439.82" stroke-dashoffset="439.82" stroke-linecap="round" transform="rotate(-113,100,100)" />
+                    <g class="pencil__rotate" transform="translate(100,100)">
+                        <g fill="none">
+                            <circle class="pencil__body1" r="64" stroke="hsl(309, 47%, 63%)" stroke-width="30" stroke-dasharray="402.12 402.12" stroke-dashoffset="402" transform="rotate(-90)" />
+                            <circle class="pencil__body2" r="74" stroke="	hsl(246, 37%, 74%)" stroke-width="10" stroke-dasharray="464.96 464.96" stroke-dashoffset="465" transform="rotate(-90)" />
+                            <circle class="pencil__body3" r="54" stroke="hsl(297,37%,65%)" stroke-width="10" stroke-dasharray="339.29 339.29" stroke-dashoffset="339" transform="rotate(-90)" />
+                        </g>
+                        <g class="pencil__eraser" transform="rotate(-90) translate(49,0)">
+                            <g class="pencil__eraser-skew">
+                                <rect fill="hsl(246,37%,74%)" rx="5" ry="5" width="30" height="30" />
+                                <rect fill="hsl(297,37%,65%)" width="5" height="30" clip-path="url(#pencil-eraser)" />
+                                <rect fill="hsl(223,10%,90%)" width="30" height="20" />
+                                <rect fill="hsl(223,10%,70%)" width="15" height="20" />
+                                <rect fill="hsl(223,10%,80%)" width="5" height="20" />
+                                <rect fill="hsla(223,10%,10%,0.2)" y="6" width="30" height="2" />
+                                <rect fill="hsla(223,10%,10%,0.2)" y="13" width="30" height="2" />
+                            </g>
+                        </g>
+                        <g class="pencil__point" transform="rotate(-90) translate(49,-30)">
+                            <polygon fill="hsl(0, 0%, 100%)" points="15 0,30 30,0 30" />
+                            <polygon fill="hsl(0, 0%, 70%)" points="15 0,6 30,0 30" />
+                            <polygon fill="hsl(10, 0%, 80%)" points="15 0,20 10,10 10" />
+                        </g>
+                    </g>
+                </svg>
+              </div>
+        </div>
     </div>
     <script src="popup.js"></script>
 </body>

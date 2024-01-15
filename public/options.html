@@ -8,26 +8,26 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
         integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
   <link rel="stylesheet" href="options.css">
-  <title>Azure DevOps Search Options</title>
+  <title>Configure Search Options</title>
 </head>
 <body>
   <div class="container">
-    <h1>Azure DevOps Search Options</h1>
+    <h1>Configure Search Options</h1>
 
-    <div class="option">
-      <input type="checkbox" id="openInNewTab">
+    <div class="option" style="display: flex;gap: 10px;cursor: pointer;">
       <label for="openInNewTab">Always open search in new tab</label>
+      <input type="checkbox" id="openInNewTab" style="width: 15px;height: 15px;cursor: pointer;" title="Open in new tab">   
     </div>
 
     <h3><span>ADO Settings</span></h3>
 
     <div class="option">
-      <label for="companyName">Company Name:</label>
+      <label for="companyName" title="Enter company name">Company Name:</label>
       <input type="text" id="companyName" placeholder="Enter company name">
     </div>
 
     <div class="option">
-      <label for="projectName">Project Name:</label>
+      <label for="projectName" title="Enter project name">Project Name:</label>
       <input type="text" id="projectName" placeholder="Enter project name">
     </div>
     
@@ -35,7 +35,7 @@
 
     <div class="option">
       <label for="configJson">Config Json
-        <i class="fa fa-info-circle">
+        <i class="fa fa-info-circle" title="Add your area and query">
           <span title="Example: "></span>
         </i>
       </label>

@@ -1,195 +1,351 @@
 import './popup.css'
 import { createParentUserStoryAndChildTask } from './ADOCreateWorkItem'
-import { generateInsightsHTML,showLoader,hideLoader, showCreatedWorkItems } from './utils'
+import {
+  generateInsightsHTML,
+  showLoader,
+  hideLoader,
+  showCreatedWorkItems,
+  isInputTextGuid,
+  replacer,
+} from './utils'
+
+import {
+  askLlama2,
+  getIntentFromTextAndUrl,
+  getPromptFromIntent,
+} from './getInisghts'
+import { kustoData } from './kustoData'
 
 let span_company = document.getElementById('company')
 let span_projectName = document.getElementById('projectName')
-let ado_search = document.getElementById('search-in-ado')
-let unify_search = document.getElementById('search-in-unify')
-let kusto_search = document.getElementById('dropdown')
 let form_newTab = document.getElementById('newTab')
 let button_settings = document.getElementById('settings')
-let input_query = document.getElementById('query')
-let flyoutMenu = document.getElementsByClassName('dropdown-content')
-let aiInsightsButton = document.getElementById('get-ai-insights')
+let FTEBuddy = document.getElementById('FTEBuddy')
+let input_query_element = document.getElementById('query')
+
+//Buttons
+let ado_search_button = document.getElementById('search-in-ado')
+let unify_search_button = document.getElementById('search-in-unify')
+let get_ai_insights_button = document.getElementById('get-ai-insights')
+let ado_create_work_item_button = document.getElementById(
+  'create-ado-work-item'
+)
+let engMs_search_button = document.getElementById('search-in-engms')
+let kusto_search_button = document.getElementById('search-in-kusto')
+
+//Dropdowns
+let kusto_search_container = document.getElementById('dropdown')
+let flyoutMenu = document.getElementById('dropdown-content')
+let select_work_item_area_dropdown = document.getElementById(
+  'select-work-item-area-dropdown'
+)
+let select_work_item_iteration_dropdown = document.getElementById(
+  'select-work-item-iteration-dropdown'
+)
+
+//Content
 let insightsContent = document.getElementById('ai-insights-results')
 let createWorkItemContent = document.getElementById('create-work-item-results')
-let ado_create_work_item = document.getElementById('create-ado-work-item')
+
+//Loader
 let create_work_item_loader = document.getElementById('create-work-item-loader')
-let engMs_search = document.getElementById('search-in-engms')
+
 let llamaOutput = ''
 
-let flyoutMenuItems;
+let flyoutMenuItems
 let kusto_suffix =
-  "&endpoint=https://powerappsclientneu.northeurope.kusto.windows.net";
+  '&endpoint=https://powerappsclientneu.northeurope.kusto.windows.net'
 let kusto_prefix =
-  "https://portal.microsoftgeneva.com/logs/kusto?database=0b14a44360bf4cae8e1e090ac91a04e5&query=";
-let adoBaseUrl;
-let kustoBaseUrl;
-let unifyBaseUrl = "https://unify.services.dynamics.com/CRM/Org";
-let configJson = {};
-let tabUrl = "";
+  'https://portal.microsoftgeneva.com/logs/kusto?database=0b14a44360bf4cae8e1e090ac91a04e5&query='
+let adoBaseUrl
+let kustoBaseUrl
+let unifyBaseUrl = 'https://unify.services.dynamics.com/CRM/Org'
+let configJson = kustoData
+let tabUrl = ''
 
-//#region Event Handlers
+//Configure search options settings button click
 button_settings.onclick = function () {
   chrome.runtime.openOptionsPage()
 }
 
-ado_search.onclick = function () {
-  let search = input_query.value;
-  let fullADOUrl = adoBaseUrl + `/_search?text=${search}&type=workitem`;
-  createNewTab(fullADOUrl);
-};
-
-unify_search.onclick = function () {
-  let search = input_query.value;
-  // Remove whitespace from search
-  search = search.replace(/\s/g, "");
-  createNewTab(`${unifyBaseUrl}/${search}`);
-};
-
-engMs_search.onclick = function () {
-  let search = input_query.value;
-  createNewTab(`https://eng.ms/search?q=${search}&filter=%5B%7B%22name%22:%22ancestorMetadataIds%22,%22operator%22:%22CONTAINS%22,%22value%22:%5B%22ad8b876f-9485-443b-9afd-181bd928ec99%22%5D%7D%5D`);
+//Configure search options FTEBuddy button click
+FTEBuddy.onclick = function () {
+  chrome.runtime.openOptionsPage()
 }
 
-input_query.oninput = inputQueryOnChangeHandler;
+//Create in ADO button click
+ado_search_button.onclick = function () {
+  let search = input_query_element.value
+  let fullADOUrl = adoBaseUrl + `/_search?text=${search}&type=workitem`
+  createNewTab(fullADOUrl)
+}
 
-function inputQueryOnChangeHandler() {
-  if (input_query.value.length === 0) {
-    ado_search.disabled = true
-    ado_create_work_item.disabled = true
-    unify_search.style.display = 'none'
-    kusto_search.style.display = 'none'
-    aiInsightsButton.style.display = 'none'
-    insightsContent.style.display = 'none'
-    createWorkItemContent.style.display='none'
-    ado_create_work_item.style.display = 'none'
-    createWorkItemContent.style.display='none'
-    engMs_search.style.display='none'
-  } else {
-    ado_search.disabled = false
+//Search in Unify button click
+unify_search_button.onclick = function () {
+  let search = input_query_element.value
+  // Remove whitespace from search term
+  search = search.replace(/\s/g, '')
+  createNewTab(`${unifyBaseUrl}/${search}`)
+}
 
-    if (isInputTextGuid(input_query.value)) {
-      unify_search.style.display = 'block'
-      kusto_search.style.display = 'block'
-      aiInsightsButton.style.display = 'none'
-      ado_create_work_item.style.display = 'none'
-      insightsContent.style.display = 'none'
-      createWorkItemContent.style.display='none'
-      engMs_search.style.display = 'none'
-      for (const [key, value] of Object.entries(configJson)) {
-        configJson[key] = replacer(value, {
-          Guid: `"${input_query.value}"`,
-        })
-      }
-      kustoBaseUrl = `${kusto_prefix}` //${configData}${kusto_suffix}
-    } else {
-      unify_search.style.display = 'none'
-      kusto_search.style.display = 'none'
-      aiInsightsButton.style.display = 'block'
-      insightsContent.style.display = 'none'
-      createWorkItemContent.style.display='none'
-      ado_create_work_item.style.display = 'block'
-      engMs_search.style.display = 'block'
+//Search in Eng.ms button click
+engMs_search_button.onclick = function () {
+  let search = input_query_element.value
+  createNewTab(
+    `https://eng.ms/search?q=${search}&filter=%5B%7B%22name%22:%22ancestorMetadataIds%22,%22operator%22:%22CONTAINS%22,%22value%22:%5B%22ad8b876f-9485-443b-9afd-181bd928ec99%22%5D%7D%5D`
+  )
+}
+
+//Search in kusto button click
+kusto_search_button.onclick = function () {
+  flyoutMenu.style.display = 'flex'
+  kusto_search_button.style.borderRadius = '0.75em 0.75em 0 0'
+}
+
+//Get AI insights button click
+get_ai_insights_button.onclick = function () {
+  ado_create_work_item_button.disabled = true
+  llamaOutput = ''
+  select_work_item_area_dropdown.style.display = 'none'
+  select_work_item_iteration_dropdown.style.display = 'none'
+  createWorkItemContent.style.display = 'none'
+  let intent = getIntentFromTextAndUrl(input_query_element.value, tabUrl)
+  let promptDictionary = getPromptFromIntent(intent)
+  insightsContent.style.display = 'block'
+  insightsContent.textContent = 'Loading insights...'
+  showLoader('get-AI-insights-loader') // Show loader while fetching insights
+  askLlama2(promptDictionary, input_query_element.value).then(
+    (llama2OutputString) => {
+      llamaOutput = llama2OutputString
+      console.log(llama2OutputString)
+      if (intent == 'specReview') {
+        document.getElementById('popup-body-id').style.width = '600px'
+        llama2OutputString
+          ? (insightsContent.innerHTML = generateInsightsHTML(
+              JSON.parse(llama2OutputString)
+            ))
+          : (insightsContent.textContent = 'No insights found !')
+      } else insightsContent.textContent = llama2OutputString
+      hideLoader('get-AI-insights-loader') // Hide loader when insights are loaded
+      ado_create_work_item_button.disabled = !(
+        intent == 'specReview' &&
+        llama2OutputString &&
+        areaDropdown.selectedIndex != -1 &&
+        areaDropdown.selectedIndex != 0 &&
+        iterationDropdown.selectedIndex != -1 &&
+        iterationDropdown.selectedIndex != 0
+      )
+      checkADOCookies().then((value) => {
+        if (value) {
+          fetchAreaAndPopulateDropdown()
+          fetchIterationAndPopulateDropdown()
+          select_work_item_area_dropdown.style.display =
+            intent == 'specReview' && llama2OutputString ? 'flex' : 'none'
+          select_work_item_iteration_dropdown.style.display =
+            intent == 'specReview' && llama2OutputString ? 'flex' : 'none'
+        } else {
+          ado_create_work_item_button.disabled = false
+        }
+      })
     }
+  )
+}
+
+async function checkADOCookies() {
+  try {
+    const cookies = await chrome.cookies.getAll({
+      url: 'https://dev.azure.com',
+    })
+    if (cookies && cookies.length > 1) return true
+    return false
+  } catch (error) {
+    console.error('Error getting cookieString:', error)
+    return false
   }
 }
 
-ado_create_work_item.onclick = async function () {
-  insightsContent.style.display='none'
-  createWorkItemContent.style.display='block'
-  createWorkItemContent.textContent="Creating work items..."
-  
-  showLoader('create-work-item-loader')
+input_query_element.oninput = inputQueryOnChangeHandler
+
+areaDropdown.addEventListener('change', function () {
+  ado_create_work_item_button.disabled =
+    areaDropdown.selectedIndex == 0 || iterationDropdown.selectedIndex == 0
+})
+
+iterationDropdown.addEventListener('change', function () {
+  ado_create_work_item_button.disabled =
+    areaDropdown.selectedIndex == 0 || iterationDropdown.selectedIndex == 0
+})
+
+//Create ADO work item button click
+ado_create_work_item_button.onclick = async function () {
+  const selectedAreaPathOption =
+    areaDropdown?.options[areaDropdown.selectedIndex]
+  const adoProjectName =
+    document.getElementById('projectName').value || 'OneCRM'
+  const selectedChildAreaPath = selectedAreaPathOption?.dataset.areaPath
+  const selectedAreaPath = adoProjectName + '\\' + selectedChildAreaPath
+  const selectedIterationPathOption =
+    iterationDropdown?.options[iterationDropdown.selectedIndex]
+  const selectedChildIterationPath =
+    selectedIterationPathOption?.dataset.areaPath
+  const selectedIterationPath =
+    adoProjectName + '\\' + selectedChildIterationPath
+
   try {
     const cookies = await chrome.cookies.getAll({
       url: 'https://dev.azure.com',
     })
     if (cookies && cookies.length > 0) {
+      select_work_item_area_dropdown.style.display = 'none'
+      select_work_item_iteration_dropdown.style.display = 'none'
+      insightsContent.style.display = 'none'
+      ado_create_work_item_button.disabled = true
+      createWorkItemContent.style.display = 'flex'
+      createWorkItemContent.textContent = 'Creating work items...'
+
+      showLoader('create-work-item-loader')
       const cookieString = cookies
         .map((cookie) => `${cookie.name}=${cookie.value}`)
         .join('; ')
       const createdWorkItems = await createParentUserStoryAndChildTask(
-        adoBaseUrl,cookieString,
-        JSON.parse(llamaOutput)
+        adoBaseUrl,
+        cookieString,
+        JSON.parse(llamaOutput),
+        selectedAreaPath,
+        selectedIterationPath
       )
-      await showCreatedWorkItems(adoBaseUrl,createdWorkItems)
+      await showCreatedWorkItems(adoBaseUrl, createdWorkItems)
       hideLoader('create-work-item-loader')
     } else {
       redirectToAzureDevOpsLogin()
     }
   } catch (error) {
+    alert('ADO login required!')
+    redirectToAzureDevOpsLogin()
     console.error('Error getting cookieString:', error)
   }
 }
 
-function redirectToAzureDevOpsLogin() {
-  chrome.tabs.create({
-    url: 'https://dev.azure.com/dynamicscrm',
-  })
-}
-
-aiInsightsButton.onclick = function () {
-  let intent = getIntentFromTextAndUrl(input_query.value, tabUrl)
-  llamaOutput=''
-  let promptDictionary = getPromptFromIntent(intent)
-  createWorkItemContent.style.display ='none'
-  ado_create_work_item.disabled=true
-  create_work_item_loader.style.display='none'
-  insightsContent.style.display = 'block'
-  insightsContent.textContent = 'Loading insights...'
-  showLoader('get-AI-insights-loader') // Show loader while fetching insights
-  askLlama2(promptDictionary, input_query.value).then((llama2OutputString) => {
-    llamaOutput = llama2OutputString
-    console.log(llama2OutputString)
-    if (intent == 'specReview') {
-      document.getElementById('popup-body-id').style.width = '600px'
-      llamaOutput?insightsContent.innerHTML = generateInsightsHTML(
-        JSON.parse(llama2OutputString)
-      ):null
-    } else insightsContent.textContent = llama2OutputString
-    hideLoader('get-AI-insights-loader') // Hide loader when insights are loaded
-    ado_create_work_item.disabled = intent !== 'specReview'
-  })
-}
-
-
-
-document.addEventListener("DOMContentLoaded", function () {
-  setGlobalVariablesFromConfig();
-  chrome.tabs.query({ active: true, currentWindow: true }).then((resp) => {
-    const [tab] = resp;
-    try {
-      chrome.scripting
-        .executeScript({
-          target: { tabId: tab.id },
-          func: () => getSelection().toString(),
+function inputQueryOnChangeHandler() {
+  if (input_query_element.value.length === 0) {
+    disableOnDOMContentLoad()
+    setDisplayNoneOnDOMContentLoad()
+  } else {
+    if (isInputTextGuid(input_query_element.value)) {
+      unify_search_button.disabled = false
+      engMs_search_button.disabled = false
+      kusto_search_button.disabled = false
+      ado_search_button.disabled = false
+      kusto_search_container.style.display = 'block'
+      for (const [key, value] of Object.entries(configJson)) {
+        configJson[key] = replacer(value, {
+          Guid: `"${input_query_element.value}"`,
         })
-        .then((resp) => {
-          if (!resp || resp.length !== 0) {
-            input_query.value = resp[0].result;
-            tabUrl = tab.url;
-            inputQueryOnChangeHandler();
-          }
-        })
-      return
-    } catch (e) {
-      console.log(e)
-      return
+      }
+      kustoBaseUrl = `${kusto_prefix}` //${configData}${kusto_suffix}
+    } else {
+      ado_search_button.disabled = false
+      unify_search_button.disabled = true
+      get_ai_insights_button.disabled = false
+      engMs_search_button.disabled = false
+      kusto_search_button.disabled = true
     }
-  });
-});
-//#endregion
+  }
+}
 
-//#region Utilities
-function isInputTextGuid(userSelection) {
-  // Remove whitespaces from the selection first
-  userSelection = userSelection.replace(/\s/g, '')
+function redirectToAzureDevOpsLogin() {
+  const adoOrganizationName = span_company.value || 'dynamicscrm'
+  chrome.tabs.create({
+    url: `https://dev.azure.com/${adoOrganizationName}`,
+  })
+}
 
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    userSelection
+function fetchIterationAndPopulateDropdown() {
+  const adoOrganizationName = span_company.value || 'dynamicscrm'
+  const adoOrganizationUrl = `https://dev.azure.com/${adoOrganizationName}`
+  const adoProjectName =
+    document.getElementById('projectName').value || 'OneCRM'
+
+  const iterationDropdown = document.getElementById('iterationDropdown')
+
+  const placeholderText = 'Select iteration'
+  // Fetch Areas from Azure DevOps
+  fetch(
+    `${adoOrganizationUrl}/${adoProjectName}/_apis/wit/classificationNodes/Iterations`
   )
+    .then((response) => response.json())
+    .then((data) => {
+      return fetchAndPopulateDropdown(
+        data._links.self.href + '?$depth=1&api-version=6.0',
+        iterationDropdown,
+        placeholderText
+      )
+    })
+    .catch((error) => console.error('Error fetching Areas or Children:', error))
+
+  // Helper function to fetch and populate dropdown options
+  function fetchAndPopulateDropdown(url, dropdown, placeholderText) {
+    return fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        populateDropdown(dropdown, data.children, placeholderText)
+      })
+  }
+}
+
+function fetchAreaAndPopulateDropdown() {
+  const adoOrganizationName = span_company.value || 'dynamicscrm'
+  const adoOrganizationUrl = `https://dev.azure.com/${adoOrganizationName}`
+  const adoProjectName =
+    document.getElementById('projectName').value || 'OneCRM'
+
+  const areaDropdown = document.getElementById('areaDropdown')
+
+  const placeholderText = 'Select area'
+  // Fetch Areas from Azure DevOps
+  fetch(
+    `${adoOrganizationUrl}/${adoProjectName}/_apis/wit/classificationNodes/Areas`
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      return fetchAndPopulateDropdown(
+        data._links.self.href + '?$depth=1&api-version=6.0',
+        areaDropdown,
+        placeholderText
+      )
+    })
+    .catch((error) => console.error('Error fetching Areas or Children:', error))
+
+  // Helper function to fetch and populate dropdown options
+  function fetchAndPopulateDropdown(url, dropdown, placeholderText) {
+    return fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        populateDropdown(dropdown, data.children, placeholderText)
+      })
+  }
+}
+
+// Helper function to populate dropdown options
+function populateDropdown(dropdown, options, placeholderText) {
+  // Clear existing options
+  dropdown.innerHTML = ''
+
+  // Add default option
+  const defaultOption = document.createElement('option')
+  defaultOption.value = ''
+  defaultOption.textContent = placeholderText
+  dropdown.appendChild(defaultOption)
+  defaultOption.style.color = 'black'
+  // Add options from the data
+  options.forEach((option) => {
+    const newOption = document.createElement('option')
+    newOption.value = option.url
+    newOption.textContent = option.path
+    newOption.dataset.areaPath = option.name
+    newOption.style.color = 'black'
+    dropdown.appendChild(newOption)
+  })
 }
 
 function createNewTab(url) {
@@ -204,134 +360,106 @@ function createNewTab(url) {
   }
 }
 
-var replacer = function (tpl, data) {
-  var re = /\$\(([^\)]+)?\)/g,
-    match;
-  while ((match = re.exec(tpl))) {
-    tpl = tpl.replace(match[0], data[match[1]]);
-    re.lastIndex = 0;
-  }
-  return tpl;
-};
-//#endregion
+function disableOnDOMContentLoad() {
+  ado_search_button.disabled = true
+  unify_search_button.disabled = true
 
-//#region AI related functions
-async function askLlama2(promptDictionary, inputText) {
-  const llmCall = fetch("https://www.llama2.ai/api", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      prompt: `<s>[INST] <<SYS>>\n${promptDictionary.userPrePrompt}\n<</SYS>>\n\n${inputText}[/INST]\n`,
-      model: "meta/llama-2-70b-chat",
-      systemPrompt: `${promptDictionary.systemPrompt}`,
-      temperature: 0.75,
-      topP: 0.9,
-      maxTokens: 800,
-      image: null,
-      audio: null,
-    }),
-  });
-
-  const response = await llmCall;
-  if (response.ok) {
-    const text = await response.text();
-    if (text.includes("<result>")) {
-      let jsonOutput = text.split("<result>")[1].split("</result>")[0];
-      return jsonOutput;
-    } else {
-      return text;
-    }
-  }
+  engMs_search_button.disabled = true
+  get_ai_insights_button.disabled = true
+  ado_create_work_item_button.disabled = true
+  kusto_search_button.disabled = true
 }
 
-function getIntentFromTextAndUrl(selectedText, tabUrl) {
-  let intent = "unknown";
-  if (tabUrl.includes(".pdf") || tabUrl.includes(".docx")) {
-    intent = "specReview";
-  } else if (tabUrl.includes("portal.microsofticm.com")) {
-    intent = "debug";
-  }
-
-  return intent;
+function setDisplayNoneOnDOMContentLoad() {
+  select_work_item_area_dropdown.style.display = 'none'
+  select_work_item_iteration_dropdown.style.display = 'none'
+  insightsContent.style.display = 'none'
+  createWorkItemContent.style.display = 'none'
+  create_work_item_loader.style.display = 'none'
+  // kusto_search_container.style.display = 'none'
+  flyoutMenu.style.display = 'none'
 }
-
-function getPromptFromIntent(intent) {
-  switch (intent) {
-    case "specReview":
-      return {
-        systemPrompt:
-          "You are a JSON document generator assisting a product manager to create user stories and tasks from the spec review document",
-        userPrePrompt:
-          "Generate a JSON document from the input text representing an array of work items as user stories and tasks. Every item in the JSON array should have the following structure: 'unique_key' representing a unique number; 'title_of_item' having a string value respresenting a very short title for the work item; 'description_of_item' having a string value respresenting description of the work item; 'type_of_item' having a string value which can be either 'userstory' or 'task'; 'parent_item_unique_key' for linking tasks to a user story. Give parentId as -1 to user stories. The generated JSON should conform to this structure. Do not include any additional or invalid keys. Surround your JSON output with <result></result> tags.",
-      };
-    case "debug":
-      return {
-        systemPrompt:
-          "You are an AI code and code error assistant that explains code and error messages and exceptions.",
-        userPrePrompt:
-          "Help me understand this text which is either an error or a code snippet. If the message is an error use the context of Dynamics 365, explain the error message and provide ways to resolve it. If the message is a code snippet, then explain the code. Be concise and straightforward in your answer. ",
-      };
-    case "unknown":
-      return {
-        systemPrompt:
-          "You are an AI code and code error assistant that explains code and error messages and exceptions.",
-        userPrePrompt:
-          "Help me understand this text which is either an error or a code snippet. Auto detect the category and explain the details of this text. Be concise and straightforward in your answer.",
-      };
-    default:
-      return {};
-  }
-}
-
-//#endregion
 
 function setGlobalVariablesFromConfig() {
+  select_work_item_area_dropdown.style.display = 'none'
+  select_work_item_iteration_dropdown.style.display = 'none'
   chrome.storage.sync
     .get({ adoSettings: {}, kustoSettings: {}, newTab: true })
     .then((items) => {
-      let companyName = items.adoSettings.company || "dynamicscrm";
-      let projectName = items.adoSettings.project || "OneCRM";
+      let companyName = items.adoSettings.company || 'dynamicscrm'
+      let projectName = items.adoSettings.project || 'OneCRM'
 
       // make sure they're both present
       if (
         !(companyName && companyName.length > 0) ||
         !(projectName && projectName.length > 0)
       ) {
-        span_company.textContent = "[OPTIONS NOT SET]";
-        ado_search.disabled = true;
+        span_company.textContent = '[OPTIONS NOT SET]'
+        ado_search.disabled = true
       }
 
-      span_company.textContent = companyName;
-      span_projectName.textContent = projectName;
-      form_newTab.checked = items.newTab;
-      adoBaseUrl = `https://dev.azure.com/${companyName}/${projectName}`;
+      span_company.textContent = companyName
+      span_projectName.textContent = projectName
+      form_newTab.checked = items.newTab
+      adoBaseUrl = `https://dev.azure.com/${companyName}/${projectName}`
 
       if (
         items.kustoSettings.configJson !== undefined &&
-        items.kustoSettings.configJson !== ""
+        items.kustoSettings.configJson !== ''
       ) {
-        configJson = JSON.parse(items.kustoSettings.configJson);
-
+        configJson = JSON.parse(items.kustoSettings.configJson)
+      }
         // Create a new link for each kusto scenario and add it to the flyout menu
         for (const [key, value] of Object.entries(configJson)) {
-          var link = document.createElement("div");
-          link.className = "dropdown-items";
-          link.id = key;
-          link.innerHTML = key;
-          flyoutMenu[0].appendChild(link);
+          var link = document.createElement('div')
+          link.className = 'dropdown-items'
+          link.id = key
+          link.innerHTML = key
+          flyoutMenu.appendChild(link)
         }
 
-        flyoutMenuItems = document.getElementsByClassName("dropdown-items");
+        flyoutMenuItems = document.getElementsByClassName('dropdown-items')
 
         Array.from(flyoutMenuItems).forEach((element) => {
-          element.addEventListener("click", () => {
+          element.addEventListener('click', () => {
             let finalKustoQuery =
-              kustoBaseUrl + configJson[element.id] + kusto_suffix;
-            createNewTab(finalKustoQuery);
-          });
-        });
-      }
-    });
+              kustoBaseUrl + configJson[element.id] + kusto_suffix
+            createNewTab(finalKustoQuery)
+          })
+        })
+      
+    })
 }
+
+function executeOnDOMContentLoad() {
+  setGlobalVariablesFromConfig()
+  disableOnDOMContentLoad()
+  setDisplayNoneOnDOMContentLoad()
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  llamaOutput = ''
+  executeOnDOMContentLoad()
+
+  chrome.tabs.query({ active: true, currentWindow: true }).then((resp) => {
+    const [tab] = resp
+    try {
+      chrome.scripting
+        .executeScript({
+          target: { tabId: tab.id },
+          func: () => getSelection().toString(),
+        })
+        .then((resp) => {
+          if (!resp || resp.length !== 0) {
+            input_query_element.value = resp[0].result
+            tabUrl = tab.url
+            inputQueryOnChangeHandler()
+          }
+        })
+      return
+    } catch (e) {
+      console.log(e)
+      return
+    }
+  })
+})
